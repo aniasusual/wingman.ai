@@ -1,1 +1,32 @@
-new
+{
+    "manifest_version": 3,
+    "name": "Wingman",
+    "version": "1.0",
+    "description": "Transcribe and assist during live video calls.",
+    "permissions": [
+        "tabs",
+        "storage",
+        "scripting",
+        "tabCapture"
+    ],
+    "host_permissions": [
+        "*://*/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "all_frames": true
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
