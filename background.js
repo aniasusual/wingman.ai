@@ -9,6 +9,10 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Message received:", message);
-    sendResponse({ response: "Message received" });
+    console.log("Message received in background.js:", message);
+
+    if (message.action === "test") {
+        console.log("Test message received from content.js!");
+        sendResponse({ response: "Hello from background.js!" });
+    }
 });
