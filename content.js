@@ -65,19 +65,23 @@ function displayTranscript(text) {
 //     recognition.start();
 // }
 
+window.addEventListener("message", (event) => {
+    if (event.data.action === "start_transcription") {
+        navigator.mediaDevices.getUserMedia({ audio: { deviceId: event.data.streamId } })
+            .then(startTranscription)
+            .catch(console.error);
+    }
+});
+
 function startTranscription(stream) {
-    console.log("lode k bache");
+    console.log("Starting transcription...");
     const audioContext = new AudioContext();
     const source = audioContext.createMediaStreamSource(stream);
+    source.connect(audioContext.destination); // Keep audio playing
 
-    // 2. Keep audio playing through speakers
-    source.connect(audioContext.destination);
-
-    // 3. Create a MediaStream destination for recording
     const recordingDestination = audioContext.createMediaStreamDestination();
     source.connect(recordingDestination);
 
-    // 4. Setup MediaRecorder
     const recorder = new MediaRecorder(recordingDestination.stream);
     let audioChunks = [];
 
@@ -87,34 +91,22 @@ function startTranscription(stream) {
 
     recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        audioChunks = []; // Clear chunks to free memory
+        audioChunks = [];
         transcribeAudio(audioBlob);
-
-        // Restart recording if needed
         recorder.start();
-        setTimeout(() => recorder.stop(), 5000); // Stop after 5s
+        setTimeout(() => recorder.stop(), 5000);
     };
 
-    chrome.runtime.sendMessage(
-        { action: "test", message: "Hello from content.js!" },
-        (response) => {
-            if (chrome.runtime.lastError) {
-                console.error("Error sending message:", chrome.runtime.lastError);
-            } else {
-                console.log("Response from background:", response);
-            }
-        }
-    );
-
     recorder.start();
-    setTimeout(() => recorder.stop(), 5000); // Stop after 5s
+    setTimeout(() => recorder.stop(), 5000);
 }
 
 
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "start_transcription") {
-        console.log("Starting transcription...");
-        startTranscription(message.stream);
-    }
-});
+
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//     if (message.action === "start_transcription") {
+//         console.log("Starting transcription...");
+//         startTranscription(message.stream);
+//     }
+// });
