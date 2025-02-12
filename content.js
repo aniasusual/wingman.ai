@@ -21,49 +21,13 @@ function displayTranscript(text) {
     transcriptDiv.innerText = text;
 }
 
-// function startTranscription(stream) {
-//     const recognition = new (window.SpeechRecognition ||
-//         window.webkitSpeechRecognition)();
-//     recognition.continuous = true;
-//     recognition.interimResults = true;
-//     recognition.lang = "en-US";
+function stopTranscription() {
+    if (window.recorder) {
+        window.recorder.stop();
+        console.log("Transcription stopped.");
+    }
+}
 
-//     // Create an AudioContext to process the stream
-//     const audioContext = new AudioContext();
-
-//     // const source = audioContext.createMediaStreamSource(stream);
-//     // const destination = audioContext.createMediaStreamDestination();
-//     // source.connect(destination);
-
-
-//     const source = audioContext.createMediaStreamSource(stream);
-
-//     // 4. Create a destination node to keep audio playing through speakers
-//     const outputDestination = audioContext.destination;
-
-//     // 5. Create a MediaStream destination to capture the audio separately
-//     const recordingDestination = audioContext.createMediaStreamDestination();
-
-//     // 6. Connect the source to both destinations
-//     source.connect(outputDestination); // Keep audio playing
-//     source.connect(recordingDestination);
-
-
-//     recognition.onresult = (event) => {
-//         let transcript = "";
-//         for (let i = event.resultIndex; i < event.results.length; i++) {
-//             transcript += event.results[i][0].transcript + " ";
-//         }
-//         console.log("Live Transcription:", transcript);
-//         displayTranscript(transcript);
-//     };
-
-//     recognition.onerror = (event) => {
-//         console.error("SpeechRecognition error:", event.error);
-//     };
-
-//     recognition.start();
-// }
 
 window.addEventListener("message", (event) => {
     if (event.data.action === "start_transcription") {
@@ -72,6 +36,38 @@ window.addEventListener("message", (event) => {
             .catch(console.error);
     }
 });
+
+async function transcribeAudio(audioBlob) {
+    console.log("Sending audio for transcription...");
+
+    // Convert the audio blob to a File object
+    const formData = new FormData();
+    formData.append("file", audioBlob, "audio.wav");
+    formData.append("model", "whisper-1"); // Whisper API model
+
+    try {
+        const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer YOUR_OPENAI_API_KEY", // Replace with your OpenAI API key
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("Transcription received:", data.text);
+
+        // Display the transcription
+        displayTranscript(data.text);
+    } catch (error) {
+        console.error("Error transcribing audio:", error);
+    }
+}
+
 
 function startTranscription(stream) {
     console.log("Starting transcription...");
@@ -83,6 +79,8 @@ function startTranscription(stream) {
     source.connect(recordingDestination);
 
     const recorder = new MediaRecorder(recordingDestination.stream);
+    window.recorder = recorder; // Store globally to stop later
+
     let audioChunks = [];
 
     recorder.ondataavailable = (event) => {
@@ -100,13 +98,3 @@ function startTranscription(stream) {
     recorder.start();
     setTimeout(() => recorder.stop(), 5000);
 }
-
-
-
-
-// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-//     if (message.action === "start_transcription") {
-//         console.log("Starting transcription...");
-//         startTranscription(message.stream);
-//     }
-// });
