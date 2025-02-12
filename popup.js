@@ -63,6 +63,12 @@ function startCapture() {
             console.log("Captured audio stream successfully.");
             capturedStream = stream; // Store stream
 
+            // 🔹 Ensure the audio plays through speakers
+            const audioContext = new AudioContext();
+            const source = audioContext.createMediaStreamSource(stream);
+            const destination = audioContext.destination;
+            source.connect(destination); // Connect the audio to speakers
+
             chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
                 if (tabs.length === 0) return;
 
