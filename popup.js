@@ -63,7 +63,6 @@ function startCapture() {
             console.log("Captured audio stream successfully.");
             capturedStream = stream; // Store stream
 
-            // 🔹 Ensure the audio plays through speakers
             const audioContext = new AudioContext();
             const source = audioContext.createMediaStreamSource(stream);
             const destination = audioContext.destination;
