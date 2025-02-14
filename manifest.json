@@ -27,6 +27,18 @@
             "all_frames": true
         }
     ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "audio/voskProcessor.js",
+                "vosk/vosk.js",
+                "vosk/voskModel/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
     "action": {
         "default_popup": "popup.html"
     }
