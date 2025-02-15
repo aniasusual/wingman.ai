@@ -101,51 +101,136 @@
 // }
 
 
-async function loadVosk() {
-    console.log("Loading Vosk...");
-    const vosk = await import(chrome.runtime.getURL("vosk/vosk.js"));
-    await vosk.init();
-    const model = await vosk.createModel(chrome.runtime.getURL("vosk/voskModel"));
-    return model;
-}
+let systemRecognition = null;
+let micRecognition = null;
+let systemTranscript = '';
+let micTranscript = '';
 
-async function startTranscription(stream) {
-    console.log("Starting Vosk transcription...");
+window.addEventListener("message", (event) => {
+    if (event.data.action === "start_transcription") {
+        // Get microphone stream for local voice
+        navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true
+            }
+        })
+            .then(micStream => {
+                // Get system stream for remote voice
+                navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        deviceId: event.data.streamId
+                    }
+                })
+                    .then(systemStream => {
+                        startDualTranscription(systemStream, micStream);
+                    });
+            })
+            .catch(console.error);
+    }
+});
 
-    const model = await loadVosk();
-    const recognizer = new model.KaldiRecognizer(16000);
+function startDualTranscription(systemStream, micStream) {
+    // Initialize two speech recognition instances
+    systemRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    micRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
-    const audioContext = new AudioContext();
-    await audioContext.audioWorklet.addModule(chrome.runtime.getURL("audio/voskProcessor.js"));
+    // Configure both recognition instances
+    [systemRecognition, micRecognition].forEach(recognition => {
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+    });
 
-    const source = audioContext.createMediaStreamSource(stream);
-    const workletNode = new AudioWorkletNode(audioContext, "vosk-processor");
+    // Set up audio contexts and processing
+    const systemContext = new AudioContext();
+    const micContext = new AudioContext();
 
-    workletNode.port.postMessage({ action: "loadModel", modelData: recognizer });
+    const systemSource = systemContext.createMediaStreamSource(systemStream);
+    const micSource = micContext.createMediaStreamSource(micStream);
 
-    workletNode.port.onmessage = (event) => {
-        if (event.data.transcript) {
-            displayTranscript(event.data.transcript);
-        }
+    // Only connect system audio to speakers, not the mic audio
+    systemSource.connect(systemContext.destination);
+    // Don't connect micSource to destination to prevent echo
+    // But we'll still use it for transcription
+
+    // Create MediaStreamDestination for system audio
+    const systemDestination = systemContext.createMediaStreamDestination();
+    systemSource.connect(systemDestination);
+
+    // Create MediaStreamDestination for mic audio (for transcription only)
+    const micDestination = micContext.createMediaStreamDestination();
+    micSource.connect(micDestination);
+
+    // Handle system audio transcription (other person)
+    systemRecognition.onresult = (event) => {
+        handleTranscriptionResult(event, 'system');
     };
 
-    source.connect(workletNode);
-    workletNode.connect(audioContext.destination);
+    // Handle microphone transcription (your voice)
+    micRecognition.onresult = (event) => {
+        handleTranscriptionResult(event, 'mic');
+    };
 
-    window.transcriptionNode = workletNode;
-}
+    // Start both recognition instances
+    try {
+        systemRecognition.start();
+        micRecognition.start();
 
-function stopTranscription() {
-    if (window.transcriptionNode) {
-        window.transcriptionNode.port.postMessage({ action: "stop" });
-        window.transcriptionNode.disconnect();
-        window.transcriptionNode = null;
-        console.log("Vosk transcription stopped.");
+        window.recorder = {
+            stop: () => {
+                systemRecognition.stop();
+                micRecognition.stop();
+                systemSource.disconnect();
+                micSource.disconnect();
+                systemContext.close();
+                micContext.close();
+                systemStream.getTracks().forEach(track => track.stop());
+                micStream.getTracks().forEach(track => track.stop());
+                systemRecognition = null;
+                micRecognition = null;
+                window.recorder = null;
+                // Clear transcripts
+                systemTranscript = '';
+                micTranscript = '';
+                // Remove transcript display
+                const transcriptDiv = document.getElementById("transcription");
+                if (transcriptDiv) {
+                    transcriptDiv.remove();
+                }
+            }
+        };
+    } catch (error) {
+        console.error('Failed to start recognition:', error);
     }
 }
 
-function displayTranscript(text) {
-    console.log("Transcription:", text);
+function handleTranscriptionResult(event, source) {
+    let finalTranscript = '';
+    let interimTranscript = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+            if (source === 'system') {
+                systemTranscript += transcript + ' ';
+            } else {
+                micTranscript += transcript + ' ';
+            }
+        } else {
+            interimTranscript += transcript;
+        }
+    }
+
+    displayDualTranscript(systemTranscript, micTranscript, source, interimTranscript);
+}
+
+function displayDualTranscript(systemTranscript, micTranscript, currentSource, interimText) {
+    console.log("systemTranscript: ", systemTranscript);
+    console.log("micTranscript: ", micTranscript);
+    console.log("currentSource: ", currentSource);
+
     let transcriptDiv = document.getElementById("transcription");
     if (!transcriptDiv) {
         transcriptDiv = document.createElement("div");
@@ -153,20 +238,33 @@ function displayTranscript(text) {
         transcriptDiv.style.position = "fixed";
         transcriptDiv.style.bottom = "10px";
         transcriptDiv.style.left = "10px";
+        transcriptDiv.style.width = "400px";
+        transcriptDiv.style.maxHeight = "300px";
+        transcriptDiv.style.overflowY = "auto";
         transcriptDiv.style.backgroundColor = "rgba(0,0,0,0.8)";
         transcriptDiv.style.color = "white";
-        transcriptDiv.style.padding = "10px";
+        transcriptDiv.style.padding = "15px";
         transcriptDiv.style.borderRadius = "5px";
         transcriptDiv.style.zIndex = "9999";
+        transcriptDiv.style.fontFamily = "Arial, sans-serif";
+        transcriptDiv.style.fontSize = "14px";
         document.body.appendChild(transcriptDiv);
     }
-    transcriptDiv.innerText = text;
-}
 
-window.addEventListener("message", (event) => {
-    if (event.data.action === "start_transcription") {
-        navigator.mediaDevices.getUserMedia({ audio: { deviceId: event.data.streamId } })
-            .then(startTranscription)
-            .catch(console.error);
-    }
-});
+    transcriptDiv.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <div style="color: #4CAF50; margin-bottom: 5px;">You:</div>
+            <div style="margin-left: 10px;">${micTranscript}</div>
+            ${currentSource === 'mic' ?
+            `<div style="margin-left: 10px; color: #aaa; font-style: italic;">${interimText}</div>` :
+            ''}
+        </div>
+        <div style="margin-bottom: 10px;">
+            <div style="color: #2196F3; margin-bottom: 5px;">Other Person:</div>
+            <div style="margin-left: 10px;">${systemTranscript}</div>
+            ${currentSource === 'system' ?
+            `<div style="margin-left: 10px; color: #aaa; font-style: italic;">${interimText}</div>` :
+            ''}
+        </div>
+    `;
+}
