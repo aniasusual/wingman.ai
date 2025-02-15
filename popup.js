@@ -1,3 +1,4 @@
+// popup.js
 let capturedStream = null;
 
 document.getElementById("start").addEventListener("click", () => {
@@ -14,7 +15,6 @@ function stopCapture() {
         capturedStream = null;
     }
 
-    // Inject and execute stopTranscription inside content.js
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         if (tabs.length === 0) return;
 
@@ -33,8 +33,8 @@ function stopCapture() {
     document.getElementById("start").style.display = "block";
     document.getElementById("stop").style.display = "none";
     document.getElementById("status").textContent = "ready to go!";
-    document.getElementById("transcription").textContent = "";
 }
+
 
 
 function startCapture() {
@@ -49,24 +49,19 @@ function startCapture() {
             video: false,
             audioConstraints: { mandatory: { echoCancellation: true } },
         },
-        function (stream) {
+        async function (systemStream) {
             if (chrome.runtime.lastError) {
-                console.error("Capture failed:", chrome.runtime.lastError);
+                console.error("System capture failed:", chrome.runtime.lastError);
                 return;
             }
 
-            if (!stream) {
-                console.error("No stream received.");
-                return;
-            }
+            capturedStream = systemStream;
 
-            console.log("Captured audio stream successfully.");
-            capturedStream = stream; // Store stream
-
+            // Only play the system audio (other person's voice)
             const audioContext = new AudioContext();
-            const source = audioContext.createMediaStreamSource(stream);
+            const source = audioContext.createMediaStreamSource(systemStream);
             const destination = audioContext.destination;
-            source.connect(destination); // Connect the audio to speakers
+            source.connect(destination);
 
             chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
                 if (tabs.length === 0) return;
@@ -74,25 +69,33 @@ function startCapture() {
                 chrome.scripting.executeScript({
                     target: { tabId: tabs[0].id },
                     function: injectStream,
-                    args: [stream.id],
+                    args: [systemStream.id],
                 });
             });
 
             document.getElementById("start").style.display = "none";
             document.getElementById("stop").style.display = "block";
-            document.getElementById("status").textContent = "listening...";
+            document.getElementById("status").textContent = "listening to both parties...";
         }
     );
 }
 
-
-// Inject stream into the content script
 function injectStream(streamId) {
-    navigator.mediaDevices.getUserMedia({ audio: { deviceId: streamId } })
+    navigator.mediaDevices.getUserMedia({
+        audio: {
+            deviceId: streamId,
+            echoCancellation: true,
+            noiseSuppression: true
+        }
+    })
         .then((stream) => {
-            window.postMessage({ action: "start_transcription", streamId: stream.id }, "*");
+            window.postMessage({
+                action: "start_transcription",
+                streamId: stream.id
+            }, "*");
         })
         .catch((error) => {
             console.error("Failed to access captured audio:", error);
         });
 }
+
