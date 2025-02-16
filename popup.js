@@ -1,101 +1,94 @@
-// popup.js
-let capturedStream = null;
+console.log("Popup script loaded");
 
-document.getElementById("start").addEventListener("click", () => {
-    startCapture();
-});
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("Popup DOM loaded");
 
-document.getElementById("stop").addEventListener("click", () => {
-    stopCapture();
-});
+  const startBtn = document.getElementById("start");
+  const stopBtn = document.getElementById("stop");
+  const qaContainer = document.getElementById("qa-container");
 
-function stopCapture() {
-    if (capturedStream) {
-        capturedStream.getTracks().forEach((track) => track.stop());
-        capturedStream = null;
-    }
+  startBtn.addEventListener("click", async () => {
+    console.log("Start button clicked");
 
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        if (tabs.length === 0) return;
+    try {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
 
-        chrome.scripting.executeScript({
-            target: { tabId: tabs[0].id },
-            func: () => {
-                if (window.recorder) {
-                    window.recorder.stop();
-                    console.log("Transcription stopped.");
-                }
-            },
-        });
-    });
+      console.log("Active tab:", tab);
 
-    // Update UI
-    document.getElementById("start").style.display = "block";
-    document.getElementById("stop").style.display = "none";
-    document.getElementById("status").textContent = "ready to go!";
-}
+      // ✅ Inject content script if not already injected
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ["content.js"],
+      });
 
+      console.log("Content script injected successfully");
 
-
-function startCapture() {
-    if (!chrome.tabCapture) {
-        console.error("tabCapture API not available in this context.");
-        return;
-    }
-
-    chrome.tabCapture.capture(
+      // ✅ Start tab capture directly in `popup.js`
+      chrome.tabCapture.capture(
         {
-            audio: true,
-            video: false,
-            audioConstraints: { mandatory: { echoCancellation: true } },
+          audio: true,
+          video: false,
         },
-        async function (systemStream) {
-            if (chrome.runtime.lastError) {
-                console.error("System capture failed:", chrome.runtime.lastError);
-                return;
-            }
+        (stream) => {
+          if (chrome.runtime.lastError) {
+            console.error("Tab capture error:", chrome.runtime.lastError);
+            return;
+          }
 
-            capturedStream = systemStream;
+          console.log("Tab capture started successfully");
+          const tracks = stream.getAudioTracks();
 
-            // Only play the system audio (other person's voice)
-            const audioContext = new AudioContext();
-            const source = audioContext.createMediaStreamSource(systemStream);
-            const destination = audioContext.destination;
-            source.connect(destination);
-
-            chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                if (tabs.length === 0) return;
-
-                chrome.scripting.executeScript({
-                    target: { tabId: tabs[0].id },
-                    function: injectStream,
-                    args: [systemStream.id],
-                });
+          if (tracks.length > 0) {
+            chrome.tabs.sendMessage(tab.id, {
+              action: "startProcessing",
+              streamId: stream.id,
             });
 
-            document.getElementById("start").style.display = "none";
-            document.getElementById("stop").style.display = "block";
-            document.getElementById("status").textContent = "listening to both parties...";
-        }
-    );
-}
+            window.capturedStream = stream;
 
-function injectStream(streamId) {
-    navigator.mediaDevices.getUserMedia({
-        audio: {
-            deviceId: streamId,
-            echoCancellation: true,
-            noiseSuppression: true
+            startBtn.style.display = "none";
+            stopBtn.style.display = "block";
+          } else {
+            console.error("No audio tracks found in the captured stream");
+          }
         }
-    })
-        .then((stream) => {
-            window.postMessage({
-                action: "start_transcription",
-                streamId: stream.id
-            }, "*");
-        })
-        .catch((error) => {
-            console.error("Failed to access captured audio:", error);
-        });
-}
+      );
+    } catch (error) {
+      console.error("Error starting capture:", error);
+    }
+  });
 
+  stopBtn.addEventListener("click", () => {
+    console.log("Stop button clicked");
+    if (window.capturedStream) {
+      window.capturedStream.getTracks().forEach((track) => track.stop());
+      window.capturedStream = null;
+    }
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, { action: "stopProcessing" });
+      startBtn.style.display = "block";
+      stopBtn.style.display = "none";
+    });
+  });
+
+  // ✅ Listen for AI answers from background
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Received message in popup script:", message);
+
+    if (message.action === "newAnswer") {
+      console.log("Received AI response from background:", message.answer);
+      const qaContainer = document.getElementById("qa-container");
+
+      const qaItem = document.createElement("div");
+      qaItem.className = "qa-item";
+      qaItem.innerHTML = `<div class="question">Q: ${message.question}</div>
+                                <div class="answer">A: ${message.answer}</div>`;
+
+      qaContainer.prepend(qaItem);
+    }
+  });
+});

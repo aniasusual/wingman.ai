@@ -1,18 +1,63 @@
-// background.js
+let activeTabId = null;
+console.log("Background script loaded");
 
-chrome.runtime.onInstalled.addListener(() => {
-    console.log("Extension Installed");
-});
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   console.log("Message received in background:", message);
+//   if (message.action === "startTabCapture") {
+//     chrome.tabCapture.capture(
+//       {
+//         audio: true,
+//         video: false,
+//       },
+//       (stream) => {
+//         if (chrome.runtime.lastError) {
+//           console.error("Tab capture error:", chrome.runtime.lastError);
+//           sendResponse({ error: chrome.runtime.lastError.message });
+//           return;
+//         }
 
-chrome.action.onClicked.addListener((tab) => {
-    console.log("Extension icon clicked");
-});
+//         console.log("Tab capture started successfully");
+//         sendResponse({ streamId: stream.id });
+//       }
+//     );
+//     return true;
+//   }
+// });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Message received in background.js:", message);
+async function processWithGroq(question) {
+  console.log("Sending request to Groq API");
+  const GROQ_API_KEY =
+    "REDACTED_SECRET";
+  try {
+    const response = await fetch("https://api.groq.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "mixtral-8x7b-32768",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a helpful AI assistant providing concise, accurate answers to interview questions.",
+          },
+          {
+            role: "user",
+            content: question,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
 
-    if (message.action === "test") {
-        console.log("Test message received from content.js!");
-        sendResponse({ response: "Hello from background.js!" });
-    }
-});
+    const data = await response.json();
+    console.log("Groq API response:", data);
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error("Error in Groq API call:", error);
+    throw error;
+  }
+}

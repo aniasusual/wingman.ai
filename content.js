@@ -1,167 +1,198 @@
-let systemRecognition = null;
-let micRecognition = null;
-let systemTranscript = '';
-let micTranscript = '';
+console.log("Content script loaded and listening for messages");
 
-window.addEventListener("message", (event) => {
-    if (event.data.action === "start_transcription") {
-        // Get microphone stream for local voice
-        navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true
-            }
-        })
-            .then(micStream => {
-                // Get system stream for remote voice
-                navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        deviceId: event.data.streamId
-                    }
-                })
-                    .then(systemStream => {
-                        startDualTranscription(systemStream, micStream);
-                    });
-            })
-            .catch(console.error);
-    }
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("Received message in content.js:", message);
+
+  if (message.action === "startProcessing") {
+    console.log("Starting processing with stream ID:", message.streamId);
+
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: {
+          mandatory: {
+            chromeMediaSource: "tab",
+            chromeMediaSourceId: message.streamId,
+          },
+        },
+      })
+      .then((stream) => {
+        console.log("Got stream from tab capture");
+        startDeepgramStream(stream);
+        sendResponse({ status: "started" });
+      })
+      .catch((error) => {
+        console.error("Error accessing media stream:", error);
+        sendResponse({ error: error.message });
+      });
+  } else if (message.action === "stopProcessing") {
+    console.log("Stopping processing");
+    stopProcessing();
+    sendResponse({ status: "stopped" });
+  }
+  return true;
 });
 
-function startDualTranscription(systemStream, micStream) {
-    // Initialize two speech recognition instances
-    systemRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    micRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+window.MeetingAssistant = {
+  deepgramSocket: null,
+  audioContext: null,
+  mediaRecorder: null,
+  isRecording: false,
+  processingStream: null,
+};
 
-    // Configure both recognition instances
-    [systemRecognition, micRecognition].forEach(recognition => {
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
+async function startDeepgramStream(stream) {
+  console.log("Starting Deepgram stream setup");
+  const DEEPGRAM_API_KEY = "96f534b1e5c65acaebbe1f1e0e8b76e9176961c7";
+
+  try {
+    // Close existing socket if it exists
+    if (window.MeetingAssistant.deepgramSocket) {
+      console.log("Closing existing Deepgram socket");
+      window.MeetingAssistant.deepgramSocket.close();
+    }
+
+    console.log("Creating new Deepgram WebSocket connection");
+    window.MeetingAssistant.deepgramSocket = new WebSocket(
+      `wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&language=auto&model=nova-2`,
+      ["token", DEEPGRAM_API_KEY]
+    );
+
+    window.MeetingAssistant.deepgramSocket.onopen = () => {
+      console.log("Deepgram connection established successfully");
+      startAudioProcessing(stream);
+    };
+
+    window.MeetingAssistant.deepgramSocket.onerror = (error) => {
+      console.error("Deepgram WebSocket error:", error);
+    };
+
+    window.MeetingAssistant.deepgramSocket.onclose = () => {
+      console.log("Deepgram connection closed");
+    };
+
+    window.MeetingAssistant.deepgramSocket.onmessage = async (event) => {
+      console.log("Received message from Deepgram");
+      try {
+        const result = JSON.parse(event.data);
+        console.log("Parsed Deepgram result:", result);
+
+        if (result.type === "Results") {
+          const transcript = result.channel.alternatives[0].transcript;
+          console.log("Transcript:", transcript);
+
+          if (transcript && isQuestion(transcript)) {
+            console.log("Question detected:", transcript);
+            // Send question to background script for Groq processing
+            chrome.runtime.sendMessage(
+              {
+                action: "processQuestion",
+                question: transcript,
+              },
+              (response) => {
+                console.log("Received response from Groq:", response);
+                if (response.answer) {
+                  console.log("Sending answer to popup:", response.answer);
+                  chrome.runtime.sendMessage({
+                    action: "newAnswer",
+                    question: transcript,
+                    answer: response.answer,
+                  });
+                } else if (response.error) {
+                  console.error("Error from Groq:", response.error);
+                }
+              }
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error processing Deepgram message:", error);
+      }
+    };
+  } catch (error) {
+    console.error("Error setting up Deepgram connection:", error);
+  }
+}
+
+function startAudioProcessing(stream) {
+  console.log("Starting audio processing");
+  try {
+    window.MeetingAssistant.audioContext = new AudioContext({
+      sampleRate: 16000,
     });
 
-    // Set up audio contexts and processing
-    const systemContext = new AudioContext();
-    const micContext = new AudioContext();
+    const source =
+      window.MeetingAssistant.audioContext.createMediaStreamSource(stream);
+    const processor =
+      window.MeetingAssistant.audioContext.createScriptProcessor(4096, 1, 1);
 
-    const systemSource = systemContext.createMediaStreamSource(systemStream);
-    const micSource = micContext.createMediaStreamSource(micStream);
-
-    // Only connect system audio to speakers, not the mic audio
-    systemSource.connect(systemContext.destination);
-    // Don't connect micSource to destination to prevent echo
-    // But we'll still use it for transcription
-
-    // Create MediaStreamDestination for system audio
-    const systemDestination = systemContext.createMediaStreamDestination();
-    systemSource.connect(systemDestination);
-
-    // Create MediaStreamDestination for mic audio (for transcription only)
-    const micDestination = micContext.createMediaStreamDestination();
-    micSource.connect(micDestination);
-
-    // Handle system audio transcription (other person)
-    systemRecognition.onresult = (event) => {
-        handleTranscriptionResult(event, 'system');
+    processor.onaudioprocess = (e) => {
+      if (
+        window.MeetingAssistant.deepgramSocket?.readyState === WebSocket.OPEN
+      ) {
+        const inputData = e.inputBuffer.getChannelData(0);
+        const pcmData = convertFloat32ToInt16(inputData);
+        window.MeetingAssistant.deepgramSocket.send(pcmData);
+      }
     };
 
-    // Handle microphone transcription (your voice)
-    micRecognition.onresult = (event) => {
-        handleTranscriptionResult(event, 'mic');
-    };
+    source.connect(processor);
+    processor.connect(window.MeetingAssistant.audioContext.destination);
 
-    // Start both recognition instances
-    try {
-        systemRecognition.start();
-        micRecognition.start();
-
-        window.recorder = {
-            stop: () => {
-                systemRecognition.stop();
-                micRecognition.stop();
-                systemSource.disconnect();
-                micSource.disconnect();
-                systemContext.close();
-                micContext.close();
-                systemStream.getTracks().forEach(track => track.stop());
-                micStream.getTracks().forEach(track => track.stop());
-                systemRecognition = null;
-                micRecognition = null;
-                window.recorder = null;
-                // Clear transcripts
-                systemTranscript = '';
-                micTranscript = '';
-                // Remove transcript display
-                const transcriptDiv = document.getElementById("transcription");
-                if (transcriptDiv) {
-                    transcriptDiv.remove();
-                }
-            }
-        };
-    } catch (error) {
-        console.error('Failed to start recognition:', error);
-    }
+    window.MeetingAssistant.processingStream = stream;
+    window.MeetingAssistant.isRecording = true;
+    console.log("Audio processing started successfully");
+  } catch (error) {
+    console.error("Error in audio processing setup:", error);
+  }
 }
 
-function handleTranscriptionResult(event, source) {
-    let finalTranscript = '';
-    let interimTranscript = '';
-
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' ';
-            if (source === 'system') {
-                systemTranscript += transcript + ' ';
-            } else {
-                micTranscript += transcript + ' ';
-            }
-        } else {
-            interimTranscript += transcript;
-        }
-    }
-
-    displayDualTranscript(systemTranscript, micTranscript, source, interimTranscript);
+function convertFloat32ToInt16(float32Array) {
+  const int16Array = new Int16Array(float32Array.length);
+  for (let i = 0; i < float32Array.length; i++) {
+    const s = Math.max(-1, Math.min(1, float32Array[i]));
+    int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+  }
+  return int16Array.buffer;
 }
 
-function displayDualTranscript(systemTranscript, micTranscript, currentSource, interimText) {
-    console.log("systemTranscript: ", systemTranscript);
-    console.log("micTranscript: ", micTranscript);
-    console.log("currentSource: ", currentSource);
+function isQuestion(text) {
+  console.log("Checking if text is a question:", text);
+  const questionPatterns = [
+    /\?$/,
+    /^(what|how|why|when|where|who|which|whose|whom|can|could|would|will|do|does|did|is|are|was|were)/i,
+    /^tell me/i,
+  ];
 
-    let transcriptDiv = document.getElementById("transcription");
-    if (!transcriptDiv) {
-        transcriptDiv = document.createElement("div");
-        transcriptDiv.id = "transcription";
-        transcriptDiv.style.position = "fixed";
-        transcriptDiv.style.bottom = "10px";
-        transcriptDiv.style.left = "10px";
-        transcriptDiv.style.width = "400px";
-        transcriptDiv.style.maxHeight = "300px";
-        transcriptDiv.style.overflowY = "auto";
-        transcriptDiv.style.backgroundColor = "rgba(0,0,0,0.8)";
-        transcriptDiv.style.color = "white";
-        transcriptDiv.style.padding = "15px";
-        transcriptDiv.style.borderRadius = "5px";
-        transcriptDiv.style.zIndex = "9999";
-        transcriptDiv.style.fontFamily = "Arial, sans-serif";
-        transcriptDiv.style.fontSize = "14px";
-        document.body.appendChild(transcriptDiv);
+  const isQuestionResult = questionPatterns.some((pattern) =>
+    pattern.test(text.trim())
+  );
+  console.log("Is question result:", isQuestionResult);
+  return isQuestionResult;
+}
+
+function stopProcessing() {
+  console.log("Stopping all processing");
+  try {
+    if (window.MeetingAssistant.deepgramSocket) {
+      window.MeetingAssistant.deepgramSocket.close();
+      window.MeetingAssistant.deepgramSocket = null;
     }
 
-    transcriptDiv.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <div style="color: #4CAF50; margin-bottom: 5px;">You:</div>
-            <div style="margin-left: 10px;">${micTranscript}</div>
-            ${currentSource === 'mic' ?
-            `<div style="margin-left: 10px; color: #aaa; font-style: italic;">${interimText}</div>` :
-            ''}
-        </div>
-        <div style="margin-bottom: 10px;">
-            <div style="color: #2196F3; margin-bottom: 5px;">Other Person:</div>
-            <div style="margin-left: 10px;">${systemTranscript}</div>
-            ${currentSource === 'system' ?
-            `<div style="margin-left: 10px; color: #aaa; font-style: italic;">${interimText}</div>` :
-            ''}
-        </div>
-    `;
+    if (window.MeetingAssistant.audioContext) {
+      window.MeetingAssistant.audioContext.close();
+      window.MeetingAssistant.audioContext = null;
+    }
+
+    if (window.MeetingAssistant.processingStream) {
+      window.MeetingAssistant.processingStream
+        .getTracks()
+        .forEach((track) => track.stop());
+      window.MeetingAssistant.processingStream = null;
+    }
+
+    window.MeetingAssistant.isRecording = false;
+    console.log("All processing stopped successfully");
+  } catch (error) {
+    console.error("Error stopping processing:", error);
+  }
 }

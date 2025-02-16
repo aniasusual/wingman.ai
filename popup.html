@@ -1,194 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <title>Wingman</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-            width: 200px;
-            text-align: center;
-            margin: 0px;
-            padding: 100px;
-            background: #FF3366;
-            background: linear-gradient(45deg, #FF3366, #FF6B6B);
-            color: white;
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        width: 200px;
+        text-align: center;
+        margin: 0px;
+        padding: 100px;
+        background: #ff3366;
+        background: linear-gradient(45deg, #ff3366, #ff6b6b);
+        color: white;
+      }
+
+      h3 {
+        color: #fff;
+        font-weight: 700;
+        margin: 0 0 20px 0;
+        font-size: 26px;
+        position: relative;
+        display: inline-block;
+        text-shadow: 2px 2px 0px #00f5ff;
+        letter-spacing: 1px;
+      }
+
+      h3::after {
+        content: "AI";
+        position: absolute;
+        right: -30px;
+        font-size: 16px;
+        animation: bounce 1s infinite;
+        background: #00f5ff;
+        color: #000;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
 
-        h3 {
-            color: #fff;
-            font-weight: 700;
-            margin: 0 0 20px 0;
-            font-size: 26px;
-            position: relative;
-            display: inline-block;
-            text-shadow: 2px 2px 0px #00F5FF;
-            letter-spacing: 1px;
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+
+      .button-container {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      button {
+        background: #00f5ff;
+        color: #000;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 100px;
+        font-size: 16px;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 4px 4px 0px #fff;
+        flex: 1;
+        max-width: 120px;
+      }
+
+      button:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px #fff;
+        background: #fff500;
+      }
+
+      button:active {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0px #fff;
+      }
+
+      #stop {
+        background: #ff3366;
+        color: #fff;
+        display: none;
+      }
+
+      #stop:hover {
+        background: #ff0044;
+      }
+
+      #status {
+        color: #fff;
+        font-size: 14px;
+        margin: 15px 0;
+        text-transform: lowercase;
+        font-weight: 500;
+      }
+
+      #transcription {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 16px;
+        margin-top: 15px;
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: left;
+        min-height: 50px;
+        word-wrap: break-word;
+        color: #000;
+        border: 3px solid #00f5ff;
+        box-shadow: 4px 4px 0px #fff500;
+      }
+
+      #transcription:empty {
+        display: none;
+      }
+
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #ff6b6b;
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #00f5ff;
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #fff500;
+      }
+
+      ::selection {
+        background: #fff500;
+        color: black;
+      }
+
+      #status::before {
+        content: "wingman";
+        margin-right: 5px;
+      }
+
+      @keyframes rainbow {
+        0% {
+          border-color: #ff3366;
         }
 
-        h3::after {
-            content: 'AI';
-            position: absolute;
-            right: -30px;
-            font-size: 16px;
-            animation: bounce 1s infinite;
-            background: #00F5FF;
-            color: #000;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
+        25% {
+          border-color: #fff500;
         }
 
-        @keyframes bounce {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-3px);
-            }
+        50% {
+          border-color: #00f5ff;
         }
 
-        .button-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+        75% {
+          border-color: #ff6b6b;
         }
 
-        button {
-            background: #00F5FF;
-            color: #000;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 100px;
-            font-size: 16px;
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 4px 4px 0px #fff;
-            flex: 1;
-            max-width: 120px;
+        100% {
+          border-color: #ff3366;
         }
+      }
 
-        button:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0px #fff;
-            background: #FFF500;
-        }
+      #transcription:not(:empty) {
+        animation: rainbow 4s infinite;
+      }
 
-        button:active {
-            transform: translate(2px, 2px);
-            box-shadow: 2px 2px 0px #fff;
-        }
-
-        #stop {
-            background: #FF3366;
-            color: #fff;
-            display: none;
-        }
-
-        #stop:hover {
-            background: #ff0044;
-        }
-
-        #status {
-            color: #fff;
-            font-size: 14px;
-            margin: 15px 0;
-            text-transform: lowercase;
-            font-weight: 500;
-        }
-
-        #transcription {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 16px;
-            margin-top: 15px;
-            font-size: 14px;
-            line-height: 1.5;
-            text-align: left;
-            min-height: 50px;
-            word-wrap: break-word;
-            color: #000;
-            border: 3px solid #00F5FF;
-            box-shadow: 4px 4px 0px #FFF500;
-        }
-
-        #transcription:empty {
-            display: none;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #FF6B6B;
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #00F5FF;
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #FFF500;
-        }
-
-        ::selection {
-            background: #FFF500;
-            color: black;
-        }
-
-        #status::before {
-            content: 'wingman';
-            margin-right: 5px;
-        }
-
-        @keyframes rainbow {
-            0% {
-                border-color: #FF3366;
-            }
-
-            25% {
-                border-color: #FFF500;
-            }
-
-            50% {
-                border-color: #00F5FF;
-            }
-
-            75% {
-                border-color: #FF6B6B;
-            }
-
-            100% {
-                border-color: #FF3366;
-            }
-        }
-
-        #transcription:not(:empty) {
-            animation: rainbow 4s infinite;
-        }
+      .qa-item {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .question {
+        font-weight: bold;
+        color: #2196f3;
+        margin-bottom: 5px;
+      }
+      .answer {
+        color: #4caf50;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <h3>Wingman</h3>
-    <div class="button-container">
-        <button id="start">Start</button>
-        <button id="stop">Stop</button>
-    </div>
-    <p id="status">ready to go!</p>
-    <p id="transcription"></p>
+  <body>
+    <h2>Wingman</h2>
+    <!-- <div class="button-container"> -->
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <!-- </div> -->
+    <div id="qa-container"></div>
+    <!-- <p id="status">ready to go!</p>
+    <p id="transcription"></p> -->
     <script src="popup.js"></script>
-</body>
-
+  </body>
 </html>
