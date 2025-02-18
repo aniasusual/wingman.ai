@@ -2,98 +2,170 @@ let systemRecognition = null;
 let micRecognition = null;
 let systemTranscript = '';
 let micTranscript = '';
+let isSystemRecognitionActive = false;
+let isMicRecognitionActive = false;
+let shouldContinueRecognition = false;
 
-window.addEventListener("message", (event) => {
-    if (event.data.action === "start_transcription") {
-        // Get microphone stream for local voice
-        navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true
-            }
-        })
-            .then(micStream => {
-                // Get system stream for remote voice
-                navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        deviceId: event.data.streamId
-                    }
-                })
-                    .then(systemStream => {
-                        startDualTranscription(systemStream, micStream);
-                    });
-            })
-            .catch(console.error);
+window.addEventListener('message', async (event) => {
+    if (event.data.type === 'STREAMS_READY') {
+        const { systemStreamId, micStreamId } = event.data;
+        console.log("systemStreamId:", systemStreamId);
+        console.log("micStreamId:", micStreamId);
+
+        try {
+            const systemStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    deviceId: systemStreamId,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
+            });
+
+            const micStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    deviceId: micStreamId,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
+            });
+
+            startDualTranscription(systemStream, micStream);
+        } catch (error) {
+            console.error('Error accessing streams:', error);
+        }
     }
 });
 
-function startDualTranscription(systemStream, micStream) {
-    // Initialize two speech recognition instances
-    systemRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    micRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+function initializeRecognition(type) {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
 
-    // Configure both recognition instances
-    [systemRecognition, micRecognition].forEach(recognition => {
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-    });
+    recognition.onstart = () => {
+        console.log(`${type} recognition started`);
+        if (type === 'system') {
+            isSystemRecognitionActive = true;
+        } else {
+            isMicRecognitionActive = true;
+        }
+    };
 
-    // Set up audio contexts and processing
+    recognition.onend = () => {
+        console.log(`${type} recognition ended`);
+        if (type === 'system') {
+            isSystemRecognitionActive = false;
+        } else {
+            isMicRecognitionActive = false;
+        }
+
+        // Only restart if we should continue
+        if (shouldContinueRecognition) {
+            setTimeout(() => {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error(`Error restarting ${type} recognition:`, e);
+                }
+            }, 1000);
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error(`${type} recognition error:`, event.error);
+        if (type === 'system') {
+            isSystemRecognitionActive = false;
+        } else {
+            isMicRecognitionActive = false;
+        }
+
+        // Only restart on certain errors
+        if (event.error === 'network' || event.error === 'aborted') {
+            setTimeout(() => {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error(`Error restarting ${type} recognition after error:`, e);
+                }
+            }, 1000);
+        }
+    };
+
+    recognition.onresult = (event) => {
+        handleTranscriptionResult(event, type.toLowerCase());
+    };
+
+    return recognition;
+}
+
+async function startDualTranscription(systemStream, micStream) {
+    console.log("Starting dual transcription");
+    shouldContinueRecognition = true;
+
+    // Set up audio contexts
     const systemContext = new AudioContext();
     const micContext = new AudioContext();
 
     const systemSource = systemContext.createMediaStreamSource(systemStream);
     const micSource = micContext.createMediaStreamSource(micStream);
 
-    // Only connect system audio to speakers, not the mic audio
+    // Only play system audio through speakers
     systemSource.connect(systemContext.destination);
-    // Don't connect micSource to destination to prevent echo
-    // But we'll still use it for transcription
 
-    // Create MediaStreamDestination for system audio
-    const systemDestination = systemContext.createMediaStreamDestination();
-    systemSource.connect(systemDestination);
+    // Initialize recognition instances
+    systemRecognition = initializeRecognition('system');
+    micRecognition = initializeRecognition('mic');
 
-    // Create MediaStreamDestination for mic audio (for transcription only)
-    const micDestination = micContext.createMediaStreamDestination();
-    micSource.connect(micDestination);
-
-    // Handle system audio transcription (other person)
-    systemRecognition.onresult = (event) => {
-        handleTranscriptionResult(event, 'system');
-    };
-
-    // Handle microphone transcription (your voice)
-    micRecognition.onresult = (event) => {
-        handleTranscriptionResult(event, 'mic');
-    };
-
-    // Start both recognition instances
+    // Start both recognitions
     try {
-        systemRecognition.start();
-        micRecognition.start();
+        if (!isSystemRecognitionActive) {
+            await systemRecognition.start();
+        }
+        // Wait a bit before starting the second recognition
+        setTimeout(async () => {
+            if (!isMicRecognitionActive) {
+                await micRecognition.start();
+            }
+        }, 500);
 
         window.recorder = {
             stop: () => {
-                systemRecognition.stop();
-                micRecognition.stop();
-                systemSource.disconnect();
-                micSource.disconnect();
-                systemContext.close();
-                micContext.close();
-                systemStream.getTracks().forEach(track => track.stop());
-                micStream.getTracks().forEach(track => track.stop());
-                systemRecognition = null;
-                micRecognition = null;
-                window.recorder = null;
-                // Clear transcripts
-                systemTranscript = '';
-                micTranscript = '';
-                // Remove transcript display
-                const transcriptDiv = document.getElementById("transcription");
-                if (transcriptDiv) {
-                    transcriptDiv.remove();
+                try {
+                    shouldContinueRecognition = false;
+
+                    if (systemRecognition) {
+                        systemRecognition.stop();
+                    }
+                    if (micRecognition) {
+                        micRecognition.stop();
+                    }
+
+                    systemSource.disconnect();
+                    micSource.disconnect();
+
+                    systemContext.close();
+                    micContext.close();
+
+                    systemStream.getTracks().forEach(track => track.stop());
+                    micStream.getTracks().forEach(track => track.stop());
+
+                    systemRecognition = null;
+                    micRecognition = null;
+                    window.recorder = null;
+
+                    // Clear transcripts
+                    systemTranscript = '';
+                    micTranscript = '';
+                    isSystemRecognitionActive = false;
+                    isMicRecognitionActive = false;
+
+                    // Remove transcript display
+                    const transcriptDiv = document.getElementById("transcription");
+                    if (transcriptDiv) {
+                        transcriptDiv.remove();
+                    }
+                } catch (error) {
+                    console.error('Error stopping recording:', error);
                 }
             }
         };
@@ -124,10 +196,6 @@ function handleTranscriptionResult(event, source) {
 }
 
 function displayDualTranscript(systemTranscript, micTranscript, currentSource, interimText) {
-    console.log("systemTranscript: ", systemTranscript);
-    console.log("micTranscript: ", micTranscript);
-    console.log("currentSource: ", currentSource);
-
     let transcriptDiv = document.getElementById("transcription");
     if (!transcriptDiv) {
         transcriptDiv = document.createElement("div");
