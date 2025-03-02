@@ -4,33 +4,6 @@ let isRunning = false;
 let capturedStream = null;
 let mediaRecorder = null;
 let socket = null;
-let isDragging = false;
-let initialX, initialY;
-
-// Dragging functionality for minimized popup
-document.body.addEventListener("mousedown", (e) => {
-  if (isRunning && !e.target.matches("#toggleButton")) {
-    isDragging = true;
-    initialX = e.clientX - parseInt(document.body.style.left || "20");
-    initialY = e.clientY - parseInt(document.body.style.top || "20");
-    document.body.style.cursor = "grabbing";
-  }
-});
-
-document.addEventListener("mousemove", (e) => {
-  if (isDragging) {
-    e.preventDefault();
-    const newX = e.clientX - initialX;
-    const newY = e.clientY - initialY;
-    document.body.style.left = `${newX}px`;
-    document.body.style.top = `${newY}px`;
-  }
-});
-
-document.addEventListener("mouseup", () => {
-  isDragging = false;
-  document.body.style.cursor = "default";
-});
 
 toggleButton.addEventListener("click", () => {
   if (!isRunning) {
@@ -65,13 +38,7 @@ toggleButton.addEventListener("click", () => {
           document.getElementById("status").textContent = "Listening...";
           toggleButton.textContent = "Stop Assistant";
           isRunning = true;
-          // Minimize the popup
-          document.body.classList.add("minimized");
-          document.body.style.position = "fixed";
-          document.body.style.left = "20px";
-          document.body.style.top = "20px";
-          // Prevent popup from closing naturally
-          chrome.action.setPopup({ popup: "popup.html" });
+          // chrome.action.setPopup({ popup: "popup.html" });
         };
 
         socket.onmessage = (message) => {
@@ -129,13 +96,6 @@ toggleButton.addEventListener("click", () => {
     document.getElementById("status").textContent = "Stopped.";
     toggleButton.textContent = "Start Assistant";
     isRunning = false;
-    document.body.classList.remove("minimized");
-    document.body.style.position = "";
-    document.body.style.left = "";
-    document.body.style.top = "";
-    // Allow popup to close on next icon click
-    chrome.action.setPopup({ popup: "" });
-    window.close();
   }
 });
 
