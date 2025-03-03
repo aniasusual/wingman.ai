@@ -1,193 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
     <title>Wingman</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap"
+        rel="stylesheet">
     <style>
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            width: 200px;
-            text-align: center;
-            margin: 0px;
-            padding: 100px;
-            background: #FF3366;
-            background: linear-gradient(45deg, #FF3366, #FF6B6B);
-            color: white;
+            width: 300px;
+            padding: 25px;
+            background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
+            font-family: 'Montserrat', sans-serif;
+            color: #e0e0e0;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        h3 {
-            color: #fff;
-            font-weight: 700;
-            margin: 0 0 20px 0;
-            font-size: 26px;
-            position: relative;
-            display: inline-block;
-            text-shadow: 2px 2px 0px #00F5FF;
-            letter-spacing: 1px;
-        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
 
-        h3::after {
-            content: 'AI';
-            position: absolute;
-            right: -30px;
-            font-size: 16px;
-            animation: bounce 1s infinite;
-            background: #00F5FF;
-            color: #000;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        @keyframes bounce {
-
-            0%,
-            100% {
+            to {
+                opacity: 1;
                 transform: translateY(0);
             }
-
-            50% {
-                transform: translateY(-3px);
-            }
         }
 
-        .button-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 30px;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1px;
         }
 
         button {
-            background: #00F5FF;
-            color: #000;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 100px;
-            font-size: 16px;
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700;
+            background: linear-gradient(135deg, #333333, #2a2a2a);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            margin: 12px 0;
+            width: 100%;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 4px 4px 0px #fff;
-            flex: 1;
-            max-width: 120px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         button:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0px #fff;
-            background: #FFF500;
+            background: linear-gradient(135deg, #3a3a3a, #333333);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         button:active {
-            transform: translate(2px, 2px);
-            box-shadow: 2px 2px 0px #fff;
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        #stop {
-            background: #FF3366;
-            color: #fff;
-            display: none;
-        }
-
-        #stop:hover {
-            background: #ff0044;
-        }
-
-        #status {
-            color: #fff;
-            font-size: 14px;
-            margin: 15px 0;
-            text-transform: lowercase;
-            font-weight: 500;
-        }
-
-        #transcription {
-            background: rgba(255, 255, 255, 0.9);
+        .file-upload-container {
+            position: relative;
+            margin: 20px 0;
             padding: 15px;
-            border-radius: 16px;
-            margin-top: 15px;
-            font-size: 14px;
-            line-height: 1.5;
-            text-align: left;
-            min-height: 50px;
-            word-wrap: break-word;
-            color: #000;
-            border: 3px solid #00F5FF;
-            box-shadow: 4px 4px 0px #FFF500;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        #transcription:empty {
-            display: none;
+        .file-upload-container:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
+        input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #FF6B6B;
-            border-radius: 3px;
+        .upload-label {
+            font-size: 13px;
+            color: #bbbbbb;
+            display: block;
+            margin-bottom: 5px;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #00F5FF;
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #FFF500;
-        }
-
-        ::selection {
-            background: #FFF500;
-            color: black;
-        }
-
-        #status::before {
-            content: 'wingman';
-            margin-right: 5px;
-        }
-
-        @keyframes rainbow {
-            0% {
-                border-color: #FF3366;
-            }
-
-            25% {
-                border-color: #FFF500;
-            }
-
-            50% {
-                border-color: #00F5FF;
-            }
-
-            75% {
-                border-color: #FF6B6B;
-            }
-
-            100% {
-                border-color: #FF3366;
-            }
-        }
-
-        #transcription:not(:empty) {
-            animation: rainbow 4s infinite;
+        .file-types {
+            font-size: 11px;
+            color: #888888;
         }
     </style>
 </head>
 
 <body>
-    <h3>Wingman</h3>
-    <div class="button-container">
-        <button id="start">Start</button>
-        <button id="stop">Stop</button>
+    <h1>Wingman</h1>
+    <button id="toggleButton">Start Assistant</button>
+    <span id="status"></span>
+    <div class="file-upload-container">
+        <span class="upload-label">Upload your documents</span>
+        <span class="file-types">Supported: .txt, .pdf, .pptx</span>
+        <input type="file" id="notesUpload" accept=".txt,.pdf,.pptx">
     </div>
-    <p id="status">ready to go!</p>
-    <p id="transcription"></p>
+    <button id="generatePresentation">Generate Presentation</button>
     <script src="popup.js"></script>
 </body>
 
