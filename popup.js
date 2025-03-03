@@ -27,6 +27,17 @@ toggleButton.addEventListener("click", () => {
         }
 
         capturedStream = systemStream;
+
+        // Clone the stream and play it locally
+        clonedStream = capturedStream.clone(); // Clone the stream for playback
+        audioElement = new Audio();
+        audioElement.srcObject = clonedStream; // Attach cloned stream to audio element
+        audioElement.play().catch((error) => {
+          console.error("Audio playback failed:", error);
+          document.getElementById("status").textContent = "Audio playback error.";
+        });
+
+
         mediaRecorder = new MediaRecorder(systemStream, { mimeType: "audio/webm" });
         socket = new WebSocket("wss://api.deepgram.com/v1/listen", [
           "token",
