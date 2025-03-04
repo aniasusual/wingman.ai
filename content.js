@@ -1,6 +1,12 @@
 // content.js
-// Create the draggable helper window (unchanged)
-if (!document.getElementById("helperWindow")) {
+
+function createHelperWindow() {
+    // Remove existing helper window if it exists
+    const existingWindow = document.getElementById("helperWindow");
+    if (existingWindow) {
+        existingWindow.remove();
+    }
+
     const helperWindow = document.createElement("div");
     helperWindow.id = "helperWindow";
     helperWindow.innerHTML = `
@@ -161,25 +167,44 @@ if (!document.getElementById("helperWindow")) {
         helperWindow.style.transition = "opacity 0.5s ease, transform 0.3s ease";
         helperWindow.style.transform = "translateY(0)";
     }, 100);
+
+    return helperWindow;
+}
+
+function showHelperWindow() {
+    createHelperWindow();
 }
 
 chrome.runtime.onMessage.addListener(async (message) => {
     const contentDiv = document.getElementById("helperContent");
+
+    if (message.action === "showHelperWindow") {
+        showHelperWindow();
+    }
+
     if (message.action === "displayTranscript") {
+        if (!contentDiv) {
+            showHelperWindow(); // Recreate window if it doesn't exist
+        }
         generateAnswer(message.transcript).then((answer) => {
-            contentDiv.innerText = `Transcript: ${message.transcript}\nAnswer: ${answer}`;
-            contentDiv.style.opacity = "0";
+            const div = document.getElementById("helperContent"); // Get the new content div
+            div.innerText = `Transcript: ${message.transcript}\nAnswer: ${answer}`;
+            div.style.opacity = "0";
             setTimeout(() => {
-                contentDiv.style.opacity = "1";
-                contentDiv.style.transition = "opacity 0.3s ease";
+                div.style.opacity = "1";
+                div.style.transition = "opacity 0.3s ease";
             }, 50);
         });
     } else if (message.action === "displayPresentation") {
-        contentDiv.innerText = message.data;
-        contentDiv.style.opacity = "0";
+        if (!contentDiv) {
+            showHelperWindow(); // Recreate window if it doesn't exist
+        }
+        const div = document.getElementById("helperContent"); // Get the new content div
+        div.innerText = message.data;
+        div.style.opacity = "0";
         setTimeout(() => {
-            contentDiv.style.opacity = "1";
-            contentDiv.style.transition = "opacity 0.3s ease";
+            div.style.opacity = "1";
+            div.style.transition = "opacity 0.3s ease";
         }, 50);
     }
 });
