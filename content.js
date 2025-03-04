@@ -1,5 +1,8 @@
 // content.js
 
+// Global array to store session transcripts
+let sessionTranscripts = [];
+
 function createHelperWindow() {
   // Remove existing helper window if it exists
   const existingWindow = document.getElementById("helperWindow");
@@ -10,69 +13,81 @@ function createHelperWindow() {
   const helperWindow = document.createElement("div");
   helperWindow.id = "helperWindow";
   helperWindow.innerHTML = `
-        <div id="helperHeader">
-            <span class="title">Wingman Assistant</span>
-            <div class="controls">
-                <span class="minimize">−</span>
-                <span class="close">×</span>
-            </div>
-        </div>
-        <div id="helperContent">Ready to assist...</div>
-    `;
+    <div id="helperHeader">
+      <span class="title">Wingman Assistant</span>
+      <div class="controls">
+        <span class="minimize">−</span>
+        <span class="close">×</span>
+      </div>
+    </div>
+    <div id="helperContent">
+      <div id="transcriptContainer"></div>
+      <div id="downloadContainer" style="margin-top: 10px; text-align: center;">
+        <button id="downloadTranscripts" style="
+          background-color: #4CAF50; 
+          color: white; 
+          border: none; 
+          padding: 5px 10px; 
+          border-radius: 4px; 
+          cursor: pointer;
+        ">Download Session Transcripts</button>
+      </div>
+    </div>
+  `;
   helperWindow.style.cssText = `
-        position: fixed;
-        z-index: 10000;
-        width: 300px;
-        background: #1a1a1a;
-        color: #e0e0e0;
-        border: 1px solid #333;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1);
-        font-family: 'Segoe UI', Arial, sans-serif;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    `;
+    position: fixed;
+    z-index: 10000;
+    width: 400px;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  `;
   document.body.appendChild(helperWindow);
 
   const header = document.getElementById("helperHeader");
   header.style.cssText = `
-        cursor: move;
-        padding: 10px 15px;
-        background: linear-gradient(to bottom, #2a2a2a, #222);
-        border-bottom: 1px solid #333;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    `;
+    cursor: move;
+    padding: 10px 15px;
+    background: linear-gradient(to bottom, #2a2a2a, #222);
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  `;
 
   const title = header.querySelector(".title");
   title.style.cssText = `
-        font-weight: 500;
-        letter-spacing: 0.5px;
-        font-size: 14px;
-        color: gold;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    `;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    font-size: 14px;
+    color: gold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  `;
 
   const controls = header.querySelector(".controls");
   controls.style.cssText = `
-        display: flex;
-        gap: 10px;
-    `;
+    display: flex;
+    gap: 10px;
+  `;
 
   const controlButtons = controls.querySelectorAll("span");
   controlButtons.forEach((button) => {
     button.style.cssText = `
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            text-align: center;
-            line-height: 16px;
-            border-radius: 50%;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-        `;
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      text-align: center;
+      line-height: 16px;
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    `;
   });
 
   const minimize = controls.querySelector(".minimize");
@@ -93,32 +108,45 @@ function createHelperWindow() {
 
   const contentDiv = document.getElementById("helperContent");
   contentDiv.style.cssText = `
-        padding: 15px;
-        color: #e0e0e0;
-        line-height: 1.5;
-        font-size: 13px;
-        max-height: 300px;
-        overflow-y: auto;
-    `;
+    padding: 15px;
+    color: #e0e0e0;
+    line-height: 1.5;
+    font-size: 13px;
+    max-height: 500px;
+    overflow-y: auto;
+  `;
 
   const styleSheet = document.createElement("style");
   styleSheet.textContent = `
-        #helperContent::-webkit-scrollbar {
-            width: 6px;
-        }
-        #helperContent::-webkit-scrollbar-track {
-            background: #2a2a2a;
-        }
-        #helperContent::-webkit-scrollbar-thumb {
-            background: #444;
-            border-radius: 3px;
-        }
-        #helperContent::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-    `;
+    #helperContent::-webkit-scrollbar {
+      width: 6px;
+    }
+    #helperContent::-webkit-scrollbar-track {
+      background: #2a2a2a;
+    }
+    #helperContent::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 3px;
+    }
+    #helperContent::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+    .transcript-entry {
+      background-color: #2a2a2a;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .transcript-text {
+      display: inline-block;
+      width: calc(100% - 100px);
+      border-bottom: 1px dashed #555;
+      padding-bottom: 3px;
+    }
+  `;
   document.head.appendChild(styleSheet);
 
+  // Dragging functionality
   let isDragging = false;
   let currentX = 20,
     currentY = 20,
@@ -147,6 +175,7 @@ function createHelperWindow() {
     header.style.cursor = "grab";
   });
 
+  // Minimize functionality
   minimize.addEventListener("click", () => {
     const currentHeight = contentDiv.style.height;
     if (currentHeight === "0px") {
@@ -160,11 +189,17 @@ function createHelperWindow() {
     }
   });
 
+  // Close functionality
   close.addEventListener("click", () => {
     helperWindow.style.opacity = "0";
     setTimeout(() => helperWindow.remove(), 300);
   });
 
+  // Add download button functionality
+  const downloadButton = document.getElementById("downloadTranscripts");
+  downloadButton.addEventListener("click", downloadSessionTranscripts);
+
+  // Position and animate window
   helperWindow.style.left = `${currentX}px`;
   helperWindow.style.top = `${currentY}px`;
   helperWindow.style.opacity = "0";
@@ -175,6 +210,86 @@ function createHelperWindow() {
   }, 100);
 
   return helperWindow;
+}
+
+function createTranscriptEntry(transcript, answer) {
+  const entryDiv = document.createElement("div");
+  entryDiv.className = "transcript-entry";
+
+  // Transcript section
+  const transcriptSection = document.createElement("div");
+  transcriptSection.innerHTML = `
+    <strong>Transcript:</strong> 
+    <span class="transcript-text" contenteditable="true">${transcript}</span>
+    <button class="edit-submit-btn" style="
+      margin-left: 10px; 
+      background-color: #4CAF50; 
+      color: white; 
+      border: none; 
+      padding: 3px 7px; 
+      border-radius: 3px; 
+      cursor: pointer;
+    ">Submit Edit</button>
+  `;
+
+  // Answer section
+  const answerSection = document.createElement("div");
+  answerSection.innerHTML = `<strong>Answer:</strong> ${answer}`;
+
+  entryDiv.appendChild(transcriptSection);
+  entryDiv.appendChild(answerSection);
+
+  // Add event listener for edit submission
+  const editSubmitBtn = entryDiv.querySelector(".edit-submit-btn");
+  const transcriptTextSpan = entryDiv.querySelector(".transcript-text");
+
+  editSubmitBtn.addEventListener("click", async () => {
+    const editedTranscript = transcriptTextSpan.textContent.trim();
+
+    // Regenerate answer for edited transcript
+    const newAnswer = await generateAnswer(editedTranscript);
+
+    // Update the answer section
+    answerSection.innerHTML = `<strong>Answer:</strong> ${newAnswer}`;
+
+    // Update the session transcripts array
+    const index = sessionTranscripts.findIndex(entry => entry.transcript === transcript);
+    if (index !== -1) {
+      sessionTranscripts[index] = {
+        transcript: editedTranscript,
+        answer: newAnswer
+      };
+    }
+  });
+
+  return entryDiv;
+}
+
+function updateTranscriptDisplay() {
+  const transcriptContainer = document.getElementById("transcriptContainer");
+  transcriptContainer.innerHTML = ""; // Clear existing entries
+
+  // Populate with all session transcripts
+  sessionTranscripts.forEach(entry => {
+    const entryDiv = createTranscriptEntry(entry.transcript, entry.answer);
+    transcriptContainer.appendChild(entryDiv);
+  });
+}
+
+function downloadSessionTranscripts() {
+  // Create a formatted text for download
+  const transcriptText = sessionTranscripts.map((entry, index) =>
+    `Entry ${index + 1}:\nTranscript: ${entry.transcript}\nAnswer: ${entry.answer}\n\n`
+  ).join('');
+
+  // Create a Blob and trigger download
+  const blob = new Blob([transcriptText], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `WingmanAssistant_Transcripts_${new Date().toISOString().replace(/:/g, '-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function showHelperWindow() {
@@ -192,15 +307,18 @@ chrome.runtime.onMessage.addListener(async (message) => {
     if (!contentDiv) {
       showHelperWindow(); // Recreate window if it doesn't exist
     }
-    generateAnswer(message.transcript).then((answer) => {
-      const div = document.getElementById("helperContent"); // Get the new content div
-      div.innerText = `Transcript: ${message.transcript}\nAnswer: ${answer}`;
-      div.style.opacity = "0";
-      setTimeout(() => {
-        div.style.opacity = "1";
-        div.style.transition = "opacity 0.3s ease";
-      }, 50);
+
+    // Generate answer
+    const answer = await generateAnswer(message.transcript);
+
+    // Store in session transcripts
+    sessionTranscripts.push({
+      transcript: message.transcript,
+      answer: answer
     });
+
+    // Update display
+    updateTranscriptDisplay();
   } else if (message.action === "displayPresentation") {
     if (!contentDiv) {
       showHelperWindow(); // Recreate window if it doesn't exist
@@ -255,3 +373,6 @@ function generateAnswer(question) {
     });
   });
 }
+
+
+
