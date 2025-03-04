@@ -1,15 +1,15 @@
 // content.js
 
 function createHelperWindow() {
-    // Remove existing helper window if it exists
-    const existingWindow = document.getElementById("helperWindow");
-    if (existingWindow) {
-        existingWindow.remove();
-    }
+  // Remove existing helper window if it exists
+  const existingWindow = document.getElementById("helperWindow");
+  if (existingWindow) {
+    existingWindow.remove();
+  }
 
-    const helperWindow = document.createElement("div");
-    helperWindow.id = "helperWindow";
-    helperWindow.innerHTML = `
+  const helperWindow = document.createElement("div");
+  helperWindow.id = "helperWindow";
+  helperWindow.innerHTML = `
         <div id="helperHeader">
             <span class="title">Wingman Assistant</span>
             <div class="controls">
@@ -19,7 +19,7 @@ function createHelperWindow() {
         </div>
         <div id="helperContent">Ready to assist...</div>
     `;
-    helperWindow.style.cssText = `
+  helperWindow.style.cssText = `
         position: fixed;
         z-index: 10000;
         width: 300px;
@@ -32,10 +32,10 @@ function createHelperWindow() {
         overflow: hidden;
         transition: all 0.3s ease;
     `;
-    document.body.appendChild(helperWindow);
+  document.body.appendChild(helperWindow);
 
-    const header = document.getElementById("helperHeader");
-    header.style.cssText = `
+  const header = document.getElementById("helperHeader");
+  header.style.cssText = `
         cursor: move;
         padding: 10px 15px;
         background: linear-gradient(to bottom, #2a2a2a, #222);
@@ -45,8 +45,8 @@ function createHelperWindow() {
         align-items: center;
     `;
 
-    const title = header.querySelector(".title");
-    title.style.cssText = `
+  const title = header.querySelector(".title");
+  title.style.cssText = `
         font-weight: 500;
         letter-spacing: 0.5px;
         font-size: 14px;
@@ -54,15 +54,15 @@ function createHelperWindow() {
         text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     `;
 
-    const controls = header.querySelector(".controls");
-    controls.style.cssText = `
+  const controls = header.querySelector(".controls");
+  controls.style.cssText = `
         display: flex;
         gap: 10px;
     `;
 
-    const controlButtons = controls.querySelectorAll("span");
-    controlButtons.forEach((button) => {
-        button.style.cssText = `
+  const controlButtons = controls.querySelectorAll("span");
+  controlButtons.forEach((button) => {
+    button.style.cssText = `
             display: inline-block;
             width: 16px;
             height: 16px;
@@ -73,20 +73,26 @@ function createHelperWindow() {
             cursor: pointer;
             transition: background 0.2s;
         `;
-    });
+  });
 
-    const minimize = controls.querySelector(".minimize");
-    minimize.style.cssText += `background: #555; color: #111;`;
-    const close = controls.querySelector(".close");
-    close.style.cssText += `background: #555; color: #111;`;
+  const minimize = controls.querySelector(".minimize");
+  minimize.style.cssText += `background: #555; color: #111;`;
+  const close = controls.querySelector(".close");
+  close.style.cssText += `background: #555; color: #111;`;
 
-    minimize.addEventListener("mouseover", () => (minimize.style.background = "#777"));
-    minimize.addEventListener("mouseout", () => (minimize.style.background = "#555"));
-    close.addEventListener("mouseover", () => (close.style.background = "#777"));
-    close.addEventListener("mouseout", () => (close.style.background = "#555"));
+  minimize.addEventListener(
+    "mouseover",
+    () => (minimize.style.background = "#777")
+  );
+  minimize.addEventListener(
+    "mouseout",
+    () => (minimize.style.background = "#555")
+  );
+  close.addEventListener("mouseover", () => (close.style.background = "#777"));
+  close.addEventListener("mouseout", () => (close.style.background = "#555"));
 
-    const contentDiv = document.getElementById("helperContent");
-    contentDiv.style.cssText = `
+  const contentDiv = document.getElementById("helperContent");
+  contentDiv.style.cssText = `
         padding: 15px;
         color: #e0e0e0;
         line-height: 1.5;
@@ -95,8 +101,8 @@ function createHelperWindow() {
         overflow-y: auto;
     `;
 
-    const styleSheet = document.createElement("style");
-    styleSheet.textContent = `
+  const styleSheet = document.createElement("style");
+  styleSheet.textContent = `
         #helperContent::-webkit-scrollbar {
             width: 6px;
         }
@@ -111,109 +117,141 @@ function createHelperWindow() {
             background: #555;
         }
     `;
-    document.head.appendChild(styleSheet);
+  document.head.appendChild(styleSheet);
 
-    let isDragging = false;
-    let currentX = 20,
-        currentY = 20,
-        initialX,
-        initialY;
+  let isDragging = false;
+  let currentX = 20,
+    currentY = 20,
+    initialX,
+    initialY;
 
-    header.addEventListener("mousedown", (e) => {
-        isDragging = true;
-        initialX = e.clientX - currentX;
-        initialY = e.clientY - currentY;
-        header.style.cursor = "grabbing";
-    });
+  header.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    initialX = e.clientX - currentX;
+    initialY = e.clientY - currentY;
+    header.style.cursor = "grabbing";
+  });
 
-    document.addEventListener("mousemove", (e) => {
-        if (isDragging) {
-            e.preventDefault();
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
-            helperWindow.style.left = `${currentX}px`;
-            helperWindow.style.top = `${currentY}px`;
-        }
-    });
+  document.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+      helperWindow.style.left = `${currentX}px`;
+      helperWindow.style.top = `${currentY}px`;
+    }
+  });
 
-    document.addEventListener("mouseup", () => {
-        isDragging = false;
-        header.style.cursor = "grab";
-    });
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+    header.style.cursor = "grab";
+  });
 
-    minimize.addEventListener("click", () => {
-        const currentHeight = contentDiv.style.height;
-        if (currentHeight === "0px") {
-            contentDiv.style.height = "auto";
-            contentDiv.style.padding = "15px";
-            minimize.textContent = "−";
-        } else {
-            contentDiv.style.height = "0px";
-            contentDiv.style.padding = "0 15px";
-            minimize.textContent = "+";
-        }
-    });
+  minimize.addEventListener("click", () => {
+    const currentHeight = contentDiv.style.height;
+    if (currentHeight === "0px") {
+      contentDiv.style.height = "auto";
+      contentDiv.style.padding = "15px";
+      minimize.textContent = "−";
+    } else {
+      contentDiv.style.height = "0px";
+      contentDiv.style.padding = "0 15px";
+      minimize.textContent = "+";
+    }
+  });
 
-    close.addEventListener("click", () => {
-        helperWindow.style.opacity = "0";
-        setTimeout(() => helperWindow.remove(), 300);
-    });
-
-    helperWindow.style.left = `${currentX}px`;
-    helperWindow.style.top = `${currentY}px`;
+  close.addEventListener("click", () => {
     helperWindow.style.opacity = "0";
-    setTimeout(() => {
-        helperWindow.style.opacity = "1";
-        helperWindow.style.transition = "opacity 0.5s ease, transform 0.3s ease";
-        helperWindow.style.transform = "translateY(0)";
-    }, 100);
+    setTimeout(() => helperWindow.remove(), 300);
+  });
 
-    return helperWindow;
+  helperWindow.style.left = `${currentX}px`;
+  helperWindow.style.top = `${currentY}px`;
+  helperWindow.style.opacity = "0";
+  setTimeout(() => {
+    helperWindow.style.opacity = "1";
+    helperWindow.style.transition = "opacity 0.5s ease, transform 0.3s ease";
+    helperWindow.style.transform = "translateY(0)";
+  }, 100);
+
+  return helperWindow;
 }
 
 function showHelperWindow() {
-    createHelperWindow();
+  createHelperWindow();
 }
 
 chrome.runtime.onMessage.addListener(async (message) => {
-    const contentDiv = document.getElementById("helperContent");
+  const contentDiv = document.getElementById("helperContent");
 
-    if (message.action === "showHelperWindow") {
-        showHelperWindow();
-    }
+  if (message.action === "showHelperWindow") {
+    showHelperWindow();
+  }
 
-    if (message.action === "displayTranscript") {
-        if (!contentDiv) {
-            showHelperWindow(); // Recreate window if it doesn't exist
-        }
-        generateAnswer(message.transcript).then((answer) => {
-            const div = document.getElementById("helperContent"); // Get the new content div
-            div.innerText = `Transcript: ${message.transcript}\nAnswer: ${answer}`;
-            div.style.opacity = "0";
-            setTimeout(() => {
-                div.style.opacity = "1";
-                div.style.transition = "opacity 0.3s ease";
-            }, 50);
-        });
-    } else if (message.action === "displayPresentation") {
-        if (!contentDiv) {
-            showHelperWindow(); // Recreate window if it doesn't exist
-        }
-        const div = document.getElementById("helperContent"); // Get the new content div
-        div.innerText = message.data;
-        div.style.opacity = "0";
-        setTimeout(() => {
-            div.style.opacity = "1";
-            div.style.transition = "opacity 0.3s ease";
-        }, 50);
+  if (message.action === "displayTranscript") {
+    if (!contentDiv) {
+      showHelperWindow(); // Recreate window if it doesn't exist
     }
+    generateAnswer(message.transcript).then((answer) => {
+      const div = document.getElementById("helperContent"); // Get the new content div
+      div.innerText = `Transcript: ${message.transcript}\nAnswer: ${answer}`;
+      div.style.opacity = "0";
+      setTimeout(() => {
+        div.style.opacity = "1";
+        div.style.transition = "opacity 0.3s ease";
+      }, 50);
+    });
+  } else if (message.action === "displayPresentation") {
+    if (!contentDiv) {
+      showHelperWindow(); // Recreate window if it doesn't exist
+    }
+    const div = document.getElementById("helperContent"); // Get the new content div
+    div.innerText = message.data;
+    div.style.opacity = "0";
+    setTimeout(() => {
+      div.style.opacity = "1";
+      div.style.transition = "opacity 0.3s ease";
+    }, 50);
+  }
 });
 
 function generateAnswer(question) {
-    return new Promise((resolve) => {
-        chrome.storage.local.get(["notes"], (result) => {
-            const notes = result.notes || "No notes uploaded.";
-            resolve(`Response: Based on your notes - "${notes}" - here's the answer to "${question}" (AI enhancement TBD)`);
+  const apiKey = "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";
+  const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["notes"], async (result) => {
+      const notes = result.notes || "No notes uploaded.";
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an AI assistant helping a candidate prepare for technical interviews. Provide precise, well-structured, and concise answers (≤250 words) that directly address the interview question. Keep responses clear, to the point, and professional, ensuring they effectively aid in interview preparation.",
+              },
+              {
+                role: "user",
+                content: question,
+              },
+            ],
+          }),
         });
+        const data = await response.json();
+
+        if (data.choices && data.choices.length > 0)
+          resolve(`Response: ${data.choices[0].message.content}`);
+        else resolve("Error: No response from AI.");
+      } catch (error) {
+        console.error("Error fetching AI response:", error);
+        resolve("Error: Unable to fetch answer.");
+      }
     });
+  });
 }
