@@ -1,0 +1,175 @@
+let sessionTranscripts = [];
+let currentTranscript = { transcript: "", answer: "No response required." };
+let userHasScrolled = false;
+
+const contentDiv = document.getElementById("helperContent");
+const downloadButton = document.getElementById("downloadTranscripts");
+
+downloadButton.addEventListener("click", downloadSessionTranscripts);
+
+contentDiv.addEventListener("scroll", () => {
+    const isNearBottom = contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 50;
+    userHasScrolled = !isNearBottom;
+});
+
+function createTranscriptEntry(transcript, answer, isCurrent = false) {
+    const entryDiv = document.createElement("div");
+    entryDiv.className = "transcript-entry";
+
+    const transcriptSection = document.createElement("div");
+    transcriptSection.innerHTML = `
+    <div class="transcript-text-container">
+      <div class="transcript-text ${isCurrent ? 'loading' : ''}" readonly>${transcript}</div>
+      <svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+        <path d="m15 5 4 4"/>
+      </svg>
+      ${isCurrent ? `
+      <svg class="submit-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14"/>
+        <path d="m12 5 7 7-7 7"/>
+      </svg>` : ''}
+    </div>
+    <button class="edit-submit-btn hidden">Submit</button>
+  `;
+
+    const answerSection = document.createElement("div");
+    answerSection.innerHTML = `<strong>Answer: </strong><pre class="answer-content">${answer.replace(/^Response:\s*/i, '') || '—'}</pre>`;
+
+    entryDiv.appendChild(transcriptSection);
+    entryDiv.appendChild(answerSection);
+
+    const editIcon = entryDiv.querySelector(".edit-icon");
+    const submitIcon = entryDiv.querySelector(".submit-icon");
+    const transcriptTextDiv = entryDiv.querySelector(".transcript-text");
+    const submitBtn = entryDiv.querySelector(".edit-submit-btn");
+
+    editIcon.addEventListener("click", () => {
+        transcriptTextDiv.contentEditable = "true";
+        transcriptTextDiv.focus();
+        submitBtn.classList.remove("hidden");
+        transcriptTextDiv.style.border = "1px solid #4a8cb5";
+    });
+
+    submitBtn.addEventListener("click", async () => {
+        const editedTranscript = transcriptTextDiv.textContent.trim();
+        const newAnswer = await generateAnswer(editedTranscript);
+        const cleanNewAnswer = newAnswer.replace(/^Response:\s*/i, '');
+        answerSection.querySelector(".answer-content").textContent = cleanNewAnswer || '—';
+
+        const index = sessionTranscripts.findIndex(entry => entry.transcript === transcript);
+        if (index !== -1) {
+            sessionTranscripts[index] = { transcript: editedTranscript, answer: newAnswer };
+        } else if (currentTranscript.transcript === transcript) {
+            currentTranscript = { transcript: editedTranscript, answer: newAnswer };
+        }
+
+        transcriptTextDiv.contentEditable = "false";
+        submitBtn.classList.add("hidden");
+        transcriptTextDiv.style.border = "1px solid #444";
+        updateTranscriptDisplay();
+    });
+
+    if (submitIcon) {
+        submitIcon.addEventListener("click", async () => {
+            const finalTranscript = transcriptTextDiv.textContent.trim();
+            const answer = await generateAnswer(finalTranscript);
+            currentTranscript.transcript = finalTranscript;
+            currentTranscript.answer = answer;
+            sessionTranscripts.push({ ...currentTranscript });
+            currentTranscript = { transcript: "", answer: "No response required." };
+            updateTranscriptDisplay();
+        });
+    }
+
+    return entryDiv;
+}
+
+function updateTranscriptDisplay() {
+    const transcriptContainer = document.getElementById("transcriptContainer");
+    transcriptContainer.innerHTML = "";
+    sessionTranscripts.forEach(entry => {
+        const entryDiv = createTranscriptEntry(entry.transcript, entry.answer);
+        transcriptContainer.appendChild(entryDiv);
+    });
+    if (currentTranscript.transcript) {
+        const currentEntryDiv = createTranscriptEntry(currentTranscript.transcript, currentTranscript.answer, true);
+        transcriptContainer.appendChild(currentEntryDiv);
+    }
+    if (!userHasScrolled) {
+        contentDiv.scrollTop = contentDiv.scrollHeight;
+    }
+}
+
+function downloadSessionTranscripts() {
+    const transcriptText = sessionTranscripts.map((entry, index) =>
+        `Entry ${index + 1}:\nTranscript: ${entry.transcript}\nAnswer: ${entry.answer}\n\n`
+    ).join('');
+    const blob = new Blob([transcriptText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `WingmanAssistant_Transcripts_${new Date().toISOString().replace(/:/g, '-')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function generateAnswer(question) {
+    const apiKey = "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";
+    const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+    return new Promise((resolve) => {
+        chrome.storage.local.get(["notes"], async (result) => {
+            const notes = result.notes || "No notes uploaded.";
+            try {
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${apiKey}`,
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [
+                            {
+                                role: "system",
+                                content:
+                                    "You are an AI assistant helping a candidate prepare for technical interviews. Provide precise, well-structured, and concise answers (≤250 words) that directly address the interview question. Keep responses clear, to-the-point, and professional, ensuring they effectively aid in interview preparation.",
+                            },
+                            {
+                                role: "user",
+                                content: question,
+                            },
+                        ],
+                    }),
+                });
+                const data = await response.json();
+                if (data.choices && data.choices.length > 0)
+                    resolve(`Response: ${data.choices[0].message.content}`);
+                else resolve("Error: No response from AI.");
+            } catch (error) {
+                console.error("Error fetching AI response:", error);
+                resolve("Error: Unable to fetch answer.");
+            }
+        });
+    });
+}
+
+chrome.runtime.onMessage.addListener(async (message) => {
+    if (message.target !== "transcriptWindow") return;
+
+    if (message.action === "displayTranscript") {
+        currentTranscript.transcript = currentTranscript.transcript
+            ? `${currentTranscript.transcript} ${message.transcript}`
+            : message.transcript;
+
+        if (message.isFinal) {
+            const answer = await generateAnswer(currentTranscript.transcript);
+            currentTranscript.answer = answer;
+            sessionTranscripts.push({ ...currentTranscript });
+            currentTranscript = { transcript: "", answer: "No response required." };
+        }
+        updateTranscriptDisplay();
+    } else if (message.action === "displayPresentation") {
+        contentDiv.innerText = message.data;
+    }
+});
