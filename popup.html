@@ -1,146 +1,142 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Wingman</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            width: 250px;
-            padding: 15px;
-            margin: 0;
-            background: #0a0a0a;
-            font-family: 'Poppins', sans-serif;
-            color: #ffffff;
-            /* White text */
-            border-radius: 10px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.5s ease-out;
+      body {
+        width: 250px;
+        padding: 15px;
+        margin: 0;
+        background: #0a0a0a;
+        font-family: "Poppins", sans-serif;
+        color: #ffffff;
+        /* White text */
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
 
-        h1 {
-            font-family: 'Times New Roman', serif;
-            /* Classic, simple font */
-            font-size: 24px;
-            margin: 0 0 15px;
-            text-align: center;
-            color: #ffffff;
-            /* White for Wingman */
-            text-shadow: 0 1px 3px rgba(30, 144, 255, 0.4);
-            /* Blue shadow for highlight */
-            letter-spacing: -0.5px;
-            /* Reduced gap between letters */
-        }
+      .container {
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically (if needed) */
+      }
 
-        button {
-            background: linear-gradient(135deg, #1f1f1f, #151515);
-            color: #ffffff;
-            /* White text */
-            border: 1px solid rgba(30, 144, 255, 0.2);
-            /* Blue border */
-            padding: 8px;
-            margin: 8px 0;
-            width: 100%;
-            border-radius: 6px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(30, 144, 255, 0.1);
-            /* Blue shadow */
-        }
+      button {
+        background: linear-gradient(135deg, #1f1f1f, #151515);
+        color: #ffffff;
+        /* White text */
+        border: 1px solid rgba(30, 144, 255, 0.2);
+        /* Blue border */
+        padding: 8px;
+        margin: 8px 0;
+        width: 100%;
+        border-radius: 6px;
+        font-family: "Poppins", sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(30, 144, 255, 0.1);
+        /* Blue shadow */
+      }
 
-        button:hover {
-            background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
-            color: #1e90ff;
-            /* Blue text on hover */
-            transform: translateY(-1px);
-            box-shadow: 0 3px 12px rgba(30, 144, 255, 0.3);
-            /* Blue highlight */
-        }
+      button:hover {
+        background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+        color: #1e90ff;
+        /* Blue text on hover */
+        transform: translateY(-1px);
+        box-shadow: 0 3px 12px rgba(30, 144, 255, 0.3);
+        /* Blue highlight */
+      }
 
-        button:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 4px rgba(30, 144, 255, 0.1);
-        }
+      button:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 4px rgba(30, 144, 255, 0.1);
+      }
 
-        .file-upload-container {
-            position: relative;
-            margin: 10px 0;
-            padding: 10px;
-            border: 2px dashed rgba(30, 144, 255, 0.2);
-            /* Blue dashed border */
-            border-radius: 6px;
-            text-align: center;
-            transition: all 0.2s ease;
-        }
+      .file-upload-container {
+        position: relative;
+        margin: 10px 0;
+        padding: 10px;
+        border: 2px dashed rgba(30, 144, 255, 0.2);
+        /* Blue dashed border */
+        border-radius: 6px;
+        text-align: center;
+        transition: all 0.2s ease;
+      }
 
-        .file-upload-container:hover {
-            border-color: #1e90ff;
-            /* Blue highlight */
-            background: rgba(30, 144, 255, 0.1);
-            /* Faint blue tint */
-        }
+      .file-upload-container:hover {
+        border-color: #1e90ff;
+        /* Blue highlight */
+        background: rgba(30, 144, 255, 0.1);
+        /* Faint blue tint */
+      }
 
-        input[type="file"] {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
+      input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
 
-        .upload-label {
-            font-size: 11px;
-            color: #ffffff;
-            /* White text */
-            display: block;
-            margin-bottom: 3px;
-        }
+      .upload-label {
+        font-size: 11px;
+        color: #ffffff;
+        /* White text */
+        display: block;
+        margin-bottom: 3px;
+      }
 
-        .file-types {
-            font-size: 9px;
-            color: #ffffff;
-            /* White text */
-        }
+      .file-types {
+        font-size: 9px;
+        color: #ffffff;
+        /* White text */
+      }
 
-        #status {
-            display: block;
-            text-align: center;
-            font-size: 10px;
-            color: #ffffff;
-            /* White text */
-            margin: 5px 0;
-        }
+      #status {
+        display: block;
+        text-align: center;
+        font-size: 10px;
+        color: #ffffff;
+        /* White text */
+        margin: 5px 0;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <h1>Wingman</h1>
+  <body>
+    <div class="container">
+      <img src="./xoegan.png" alt="Wingman Logo" width="150" />
+    </div>
+    <!-- <h1>Wingman</h1> -->
     <button id="toggleButton">Start Assistant</button>
     <span id="status"></span>
     <div class="file-upload-container">
-        <span class="upload-label">Upload Docs</span>
-        <span class="file-types">.txt, .pdf, .pptx</span>
-        <input type="file" id="notesUpload" accept=".txt,.pdf,.pptx">
+      <span class="upload-label">Upload Docs</span>
+      <span class="file-types">.txt, .pdf, .pptx</span>
+      <input type="file" id="notesUpload" accept=".txt,.pdf,.pptx" />
     </div>
     <button id="generatePresentation">Generate Presentation</button>
     <script src="popup.js"></script>
-</body>
-
+  </body>
 </html>
