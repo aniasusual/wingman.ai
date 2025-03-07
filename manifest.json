@@ -2,27 +2,27 @@
   "manifest_version": 3,
   "name": "Wingman",
   "version": "1.0",
-  "permissions": [
-    "activeTab",
-    "storage",
-    "tabCapture",
-    "scripting"
-  ],
+  "permissions": ["activeTab", "storage", "tabCapture", "scripting"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": "xoegan.png"
+  },
+  "icons": {
+    "16": "xoegan.png",
+    "48": "xoegan.png",
+    "128": "xoegan.png"
   },
   "web_accessible_resources": [
     {
       "resources": [
         "transcript_window.html",
-        "transcript_window.js"
+        "transcript_window.js",
+        "xoegan.png"
       ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "matches": ["<all_urls>"]
     }
   ]
 }
