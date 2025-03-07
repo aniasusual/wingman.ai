@@ -3,25 +3,25 @@
 
 <head>
     <title>Wingman</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
         body {
-            width: 300px;
-            padding: 25px;
-            background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
-            font-family: 'Montserrat', sans-serif;
-            color: #e0e0e0;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 250px;
+            padding: 15px;
+            margin: 0;
+            background: #0a0a0a;
+            font-family: 'Poppins', sans-serif;
+            color: #ffffff;
+            /* White text */
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease-out;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(-20px);
+                transform: translateY(-10px);
             }
 
             to {
@@ -31,56 +31,68 @@
         }
 
         h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0 0 30px;
+            font-family: 'Times New Roman', serif;
+            /* Classic, simple font */
+            font-size: 24px;
+            margin: 0 0 15px;
             text-align: center;
             color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            letter-spacing: 1px;
+            /* White for Wingman */
+            text-shadow: 0 1px 3px rgba(30, 144, 255, 0.4);
+            /* Blue shadow for highlight */
+            letter-spacing: -0.5px;
+            /* Reduced gap between letters */
         }
 
         button {
-            background: linear-gradient(135deg, #333333, #2a2a2a);
+            background: linear-gradient(135deg, #1f1f1f, #151515);
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 20px;
-            margin: 12px 0;
+            /* White text */
+            border: 1px solid rgba(30, 144, 255, 0.2);
+            /* Blue border */
+            padding: 8px;
+            margin: 8px 0;
             width: 100%;
-            border-radius: 8px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(30, 144, 255, 0.1);
+            /* Blue shadow */
         }
 
         button:hover {
-            background: linear-gradient(135deg, #3a3a3a, #333333);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+            color: #1e90ff;
+            /* Blue text on hover */
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(30, 144, 255, 0.3);
+            /* Blue highlight */
         }
 
         button:active {
             transform: translateY(1px);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 4px rgba(30, 144, 255, 0.1);
         }
 
         .file-upload-container {
             position: relative;
-            margin: 20px 0;
-            padding: 15px;
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 2px dashed rgba(30, 144, 255, 0.2);
+            /* Blue dashed border */
+            border-radius: 6px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .file-upload-container:hover {
-            border-color: rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.05);
+            border-color: #1e90ff;
+            /* Blue highlight */
+            background: rgba(30, 144, 255, 0.1);
+            /* Faint blue tint */
         }
 
         input[type="file"] {
@@ -94,15 +106,26 @@
         }
 
         .upload-label {
-            font-size: 13px;
-            color: #bbbbbb;
+            font-size: 11px;
+            color: #ffffff;
+            /* White text */
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .file-types {
-            font-size: 11px;
-            color: #888888;
+            font-size: 9px;
+            color: #ffffff;
+            /* White text */
+        }
+
+        #status {
+            display: block;
+            text-align: center;
+            font-size: 10px;
+            color: #ffffff;
+            /* White text */
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -112,8 +135,8 @@
     <button id="toggleButton">Start Assistant</button>
     <span id="status"></span>
     <div class="file-upload-container">
-        <span class="upload-label">Upload your documents</span>
-        <span class="file-types">Supported: .txt, .pdf, .pptx</span>
+        <span class="upload-label">Upload Docs</span>
+        <span class="file-types">.txt, .pdf, .pptx</span>
         <input type="file" id="notesUpload" accept=".txt,.pdf,.pptx">
     </div>
     <button id="generatePresentation">Generate Presentation</button>
