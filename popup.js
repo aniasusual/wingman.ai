@@ -1,18 +1,18 @@
-// popup.js
 const toggleButton = document.getElementById("toggleButton");
 let isRunning = false;
 let capturedStream = null;
 let audioContext = null;
 let socket = null;
 let processor = null;
+let transcriptionBuffer = "";
+let bufferTimeout = null;
+let transcriptWindowId = null; // Add this to track the new window
 
 toggleButton.addEventListener("click", () => {
   if (!isRunning) {
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "showHelperWindow" });
-      }
+    // Open the new transcript window
+    chrome.runtime.sendMessage({ action: "openTranscriptWindow" }, (response) => {
+      transcriptWindowId = response.windowId;
     });
 
     if (!chrome.tabCapture) {
@@ -36,7 +36,6 @@ toggleButton.addEventListener("click", () => {
 
         capturedStream = systemStream;
 
-        // Clone the stream and play it locally if needed
         const clonedStream = capturedStream.clone();
         const audioElement = new Audio();
         audioElement.srcObject = clonedStream;
@@ -45,40 +44,28 @@ toggleButton.addEventListener("click", () => {
           document.getElementById("status").textContent = "Audio playback error.";
         });
 
-        // Set up WebSocket connection to Deepgram
         socket = new WebSocket("wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=48000", [
           "token",
           "96f534b1e5c65acaebbe1f1e0e8b76e9176961c7", // Replace with your Deepgram API key
         ]);
 
         socket.onopen = () => {
-          // Set up Web Audio API for real-time processing
           audioContext = new AudioContext();
           const source = audioContext.createMediaStreamSource(systemStream);
 
-          // Create a script processor node to process audio in real-time
-          // Note: ScriptProcessorNode is deprecated but still widely supported
-          // Consider using AudioWorklet for production code
           processor = audioContext.createScriptProcessor(4096, 1, 1);
 
           processor.onaudioprocess = (e) => {
             if (socket.readyState === WebSocket.OPEN) {
-              // Get the raw audio data
               const inputData = e.inputBuffer.getChannelData(0);
-
-              // Convert to 16-bit PCM (Int16Array)
               const pcmData = new Int16Array(inputData.length);
               for (let i = 0; i < inputData.length; i++) {
-                // Convert float32 to int16
                 pcmData[i] = Math.min(1, Math.max(-1, inputData[i])) * 32767;
               }
-
-              // Send the raw PCM data to Deepgram
               socket.send(pcmData.buffer);
             }
           };
 
-          // Connect the nodes
           source.connect(processor);
           processor.connect(audioContext.destination);
 
@@ -91,14 +78,21 @@ toggleButton.addEventListener("click", () => {
           const data = JSON.parse(message.data);
           const transcript = data.channel?.alternatives[0]?.transcript || "";
           if (transcript) {
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-              if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                  action: "displayTranscript",
-                  transcript: transcript,
-                });
-              }
+            transcriptionBuffer += " " + transcript.trim();
+
+            // Send to the new window via background script
+            chrome.runtime.sendMessage({
+              action: "displayTranscript",
+              transcript: transcriptionBuffer.trim(),
+              isFinal: false,
+              windowId: transcriptWindowId
             });
+
+            clearTimeout(bufferTimeout);
+            bufferTimeout = setTimeout(() => {
+              processBufferedTranscription(transcriptionBuffer.trim());
+              transcriptionBuffer = "";
+            }, 1000);
           }
         };
 
@@ -113,7 +107,6 @@ toggleButton.addEventListener("click", () => {
       }
     );
   } else {
-    // Clean up and stop streaming
     if (processor) {
       processor.disconnect();
       processor = null;
@@ -137,9 +130,105 @@ toggleButton.addEventListener("click", () => {
     document.getElementById("status").textContent = "Stopped.";
     toggleButton.textContent = "Start Assistant";
     isRunning = false;
+
+    // Close the transcript window
+    chrome.runtime.sendMessage({ action: "closeTranscriptWindow", windowId: transcriptWindowId });
+    transcriptWindowId = null;
   }
 });
 
+// Rest of your shouldQueryAPI function remains unchanged
+function shouldQueryAPI(transcript) {
+  const cleanedTranscript = transcript.trim().toLowerCase();
+  if (!cleanedTranscript) return false;
+
+  const questionStarters = [
+    "what", "how", "why", "when", "where", "who", "whose", "which", "can", "could",
+    "would", "will", "is", "are", "does", "do", "did", "should", "might", "tell me",
+    "give me", "show me", "explain", "describe", "define", "clarify", "elaborate",
+    "walk me through", "break down", "demonstrate", "illustrate", "outline",
+    "summarize", "provide", "list", "enumerate", "compare", "contrast", "analyze",
+    "solve", "implement", "code", "design", "optimize", "debug", "test",
+    "present", "prepare", "discuss", "review", "evaluate", "assess", "justify",
+    "prove", "verify", "check", "calculate", "compute", "estimate", "predict"
+  ];
+
+  const intentKeywords = [
+    "question", "answer", "solution", "example", "approach", "method", "technique",
+    "algorithm", "data structure", "complexity", "time", "space", "performance",
+    "step", "steps", "process", "procedure", "strategy", "pattern", "best practice",
+    "interview", "presentation", "slide", "meeting", "agenda", "point", "detail",
+    "definition", "meaning", "concept", "theory", "application", "use case",
+    "problem", "exercise", "task", "challenge", "query", "request", "help",
+    "assistance", "guide", "tutorial", "overview", "intro", "introduction"
+  ];
+
+  const queryEndings = ["?", "please", "..."];
+
+  const startsWithQuestion = questionStarters.some(starter =>
+    cleanedTranscript.startsWith(starter + " ") || cleanedTranscript === starter
+  );
+
+  const containsIntent = intentKeywords.some(keyword =>
+    cleanedTranscript.includes(" " + keyword + " ") ||
+    cleanedTranscript.endsWith(" " + keyword) ||
+    cleanedTranscript.startsWith(keyword + " ")
+  );
+
+  const endsWithQuery = queryEndings.some(ending =>
+    cleanedTranscript.endsWith(ending)
+  );
+
+  const contextualTriggers = [
+    "sort", "search", "traverse", "insert", "delete", "merge", "heap", "tree",
+    "graph", "array", "list", "stack", "queue", "hash", "map", "set", "binary",
+    "dynamic", "greedy", "recursion", "backtracking", "divide and conquer",
+    "big o", "runtime", "space complexity", "leetcode", "hackerrank", "codeforces",
+    "system design", "architecture", "scalability", "database", "api", "network",
+    "next slide", "previous slide", "current slide", "agenda item", "action item",
+    "meeting notes", "key takeaway", "summary of", "overview of"
+  ];
+
+  const containsContext = contextualTriggers.some(trigger =>
+    cleanedTranscript.includes(" " + trigger + " ") ||
+    cleanedTranscript.endsWith(" " + trigger) ||
+    cleanedTranscript.startsWith(trigger + " ")
+  );
+
+  const words = cleanedTranscript.split(/\s+/);
+  const hasVerbNounCombo = questionStarters.some(starter =>
+    words[0] === starter && words.length > 1 &&
+    !["i", "you", "he", "she", "it", "we", "they"].includes(words[1])
+  );
+
+  return (
+    startsWithQuestion ||
+    endsWithQuery ||
+    containsIntent ||
+    containsContext ||
+    hasVerbNounCombo
+  );
+}
+
+function processBufferedTranscription(transcript) {
+  if (shouldQueryAPI(transcript)) {
+    chrome.runtime.sendMessage({
+      action: "displayTranscript",
+      transcript: transcript,
+      isFinal: true,
+      windowId: transcriptWindowId
+    });
+  } else {
+    chrome.runtime.sendMessage({
+      action: "displayTranscript",
+      transcript: transcript,
+      isFinal: false,
+      windowId: transcriptWindowId
+    });
+  }
+}
+
+// Rest of your file upload and presentation generation logic remains unchanged
 document.getElementById("notesUpload").addEventListener("change", (event) => {
   const file = event.target.files[0];
   if (file) {
