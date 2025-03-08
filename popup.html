@@ -1,3 +1,4 @@
+<!-- popup.html -->
 <!DOCTYPE html>
 <html>
   <head>
@@ -36,6 +37,12 @@
         display: flex;
         justify-content: center; /* Center horizontally */
         align-items: center; /* Center vertically (if needed) */
+        img {
+          width: 20vw;
+        }
+        h1 {
+          font-weight: 500;
+        }
       }
 
       button {
@@ -127,8 +134,8 @@
   <body>
     <div class="container">
       <img src="./xoegan.png" alt="Wingman Logo" width="150" />
+      <h1>Wingman</h1>
     </div>
-    <!-- <h1>Wingman</h1> -->
     <button id="toggleButton">Start Assistant</button>
     <span id="status"></span>
     <div class="file-upload-container">
