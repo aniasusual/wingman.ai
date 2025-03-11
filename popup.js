@@ -8,6 +8,19 @@ let transcriptionBuffer = "";
 let bufferTimeout = null;
 let transcriptWindowId = null; // Add this to track the new window
 
+// Ensure pdfjsLib is available globally
+if (typeof pdfjsLib === "undefined") {
+  console.error("pdf.js not loaded correctly.");
+  statusDiv.textContent = "Error: PDF processing unavailable.";
+} else {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; // Point to the local script
+}
+
+if (typeof JSZip === "undefined") {
+  console.error("JSZip not loaded correctly.");
+  document.getElementById("status").textContent = "Error: PPTX processing unavailable.";
+}
+
 toggleButton.addEventListener("click", () => {
   if (!isRunning) {
     // Open the new transcript window
@@ -232,16 +245,94 @@ function processBufferedTranscription(transcript) {
 document.getElementById("notesUpload").addEventListener("change", (event) => {
   const file = event.target.files[0];
   if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      chrome.runtime.sendMessage(
-        { action: "uploadNotes", notes: e.target.result },
-        (response) => {
-          alert(response.status);
+    const fileType = file.name.split('.').pop().toLowerCase();
+    const documentContentDiv = document.getElementById("documentContent");
+    const fileNameSpan = document.getElementById("fileName");
+
+    // Display the file name
+    fileNameSpan.textContent = `Uploaded: ${file.name}`;
+
+    if (fileType == 'txt') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        documentContentDiv.textContent = content;
+        chrome.runtime.sendMessage(
+          { action: "uploadNotes", notes: content, fileName: file.name },
+          (response) => {
+            document.getElementById("status").textContent = response.status;
+          }
+        );
+      };
+      reader.readAsText(file);
+    }
+    else if (fileType == 'pdf') {
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        console.log("e: ", e);
+        const typedArray = new Uint8Array(e.target.result);
+        console.log("typedArray: ", typedArray);
+        const loadingTask = pdfjsLib.getDocument(typedArray);
+        console.log("loadingTask: ", loadingTask);
+        const pdf = await loadingTask.promise;
+        console.log("pdf: ", pdf);
+        let textContent = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const text = await page.getTextContent();
+          textContent += text.items.map(item => item.str).join(' ') + '\n';
         }
-      );
-    };
-    reader.readAsText(file);
+        console.log("text: ", textContent);
+        documentContentDiv.textContent = textContent;
+        chrome.runtime.sendMessage(
+          { action: "uploadNotes", notes: textContent, fileName: file.name },
+          (response) => {
+            document.getElementById("status").textContent = response.status;
+          }
+        );
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (fileType === 'pptx') {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target.result;
+          const zip = await JSZip.loadAsync(arrayBuffer);
+          let textContent = '';
+
+          // PPTX files store slide content in XML files (e.g., slide1.xml, slide2.xml) under ppt/slides/
+          const slideFiles = Object.keys(zip.files).filter(filename => filename.match(/^ppt\/slides\/slide\d+\.xml$/));
+          for (const slideFile of slideFiles.sort()) {
+            const xmlText = await zip.file(slideFile).async("string");
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const textNodes = xmlDoc.getElementsByTagName("a:t"); // Text content in PPTX XML
+            for (let i = 0; i < textNodes.length; i++) {
+              textContent += textNodes[i].textContent + " ";
+            }
+            textContent += "\n"; // Separate slides
+          }
+
+          documentContentDiv.textContent = textContent || "No text extracted from PPTX.";
+          chrome.runtime.sendMessage(
+            { action: "uploadNotes", notes: textContent, fileName: file.name, fileType: 'pptx' },
+            (response) => {
+              statusDiv.textContent = response.status;
+            }
+          );
+        } catch (error) {
+          console.error("PPTX parsing error: ", error);
+          documentContentDiv.textContent = "Error extracting text from PPTX.";
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      documentContentDiv.textContent = "Unsupported file type.";
+      fileNameSpan.textContent = `Uploaded: ${file.name} (Unsupported)`;
+    }
+
+    document.getElementById("status").textContent = "File uploaded successfully.";
   }
 });
 
