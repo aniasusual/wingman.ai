@@ -18,19 +18,24 @@ if (typeof pdfjsLib === "undefined") {
 
 if (typeof JSZip === "undefined") {
   console.error("JSZip not loaded correctly.");
-  document.getElementById("status").textContent = "Error: PPTX processing unavailable.";
+  document.getElementById("status").textContent =
+    "Error: PPTX processing unavailable.";
 }
 
 toggleButton.addEventListener("click", () => {
   if (!isRunning) {
     // Open the new transcript window
-    chrome.runtime.sendMessage({ action: "openTranscriptWindow" }, (response) => {
-      transcriptWindowId = response.windowId;
-    });
+    chrome.runtime.sendMessage(
+      { action: "openTranscriptWindow" },
+      (response) => {
+        transcriptWindowId = response.windowId;
+      }
+    );
 
     if (!chrome.tabCapture) {
       console.error("tabCapture API not available.");
-      document.getElementById("status").textContent = "Tab capture not available.";
+      document.getElementById("status").textContent =
+        "Tab capture not available.";
       return;
     }
 
@@ -43,7 +48,8 @@ toggleButton.addEventListener("click", () => {
       (systemStream) => {
         if (chrome.runtime.lastError) {
           console.error("System capture failed:", chrome.runtime.lastError);
-          document.getElementById("status").textContent = "Failed to capture audio.";
+          document.getElementById("status").textContent =
+            "Failed to capture audio.";
           return;
         }
 
@@ -54,13 +60,17 @@ toggleButton.addEventListener("click", () => {
         audioElement.srcObject = clonedStream;
         audioElement.play().catch((error) => {
           console.error("Audio playback failed:", error);
-          document.getElementById("status").textContent = "Audio playback error.";
+          document.getElementById("status").textContent =
+            "Audio playback error.";
         });
 
-        socket = new WebSocket("wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=48000", [
-          "token",
-          "96f534b1e5c65acaebbe1f1e0e8b76e9176961c7", // Replace with your Deepgram API key
-        ]);
+        socket = new WebSocket(
+          "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=48000",
+          [
+            "token",
+            "96f534b1e5c65acaebbe1f1e0e8b76e9176961c7", // Replace with your Deepgram API key
+          ]
+        );
 
         socket.onopen = () => {
           audioContext = new AudioContext();
@@ -98,7 +108,7 @@ toggleButton.addEventListener("click", () => {
               action: "displayTranscript",
               transcript: transcriptionBuffer.trim(),
               isFinal: false,
-              windowId: transcriptWindowId
+              windowId: transcriptWindowId,
             });
 
             clearTimeout(bufferTimeout);
@@ -115,7 +125,8 @@ toggleButton.addEventListener("click", () => {
 
         socket.onerror = (error) => {
           console.error("WebSocket error:", error);
-          document.getElementById("status").textContent = "Transcription error.";
+          document.getElementById("status").textContent =
+            "Transcription error.";
         };
       }
     );
@@ -145,7 +156,10 @@ toggleButton.addEventListener("click", () => {
     isRunning = false;
 
     // Close the transcript window
-    chrome.runtime.sendMessage({ action: "closeTranscriptWindow", windowId: transcriptWindowId });
+    chrome.runtime.sendMessage({
+      action: "closeTranscriptWindow",
+      windowId: transcriptWindowId,
+    });
     transcriptWindowId = null;
   }
 });
@@ -156,62 +170,195 @@ function shouldQueryAPI(transcript) {
   if (!cleanedTranscript) return false;
 
   const questionStarters = [
-    "what", "how", "why", "when", "where", "who", "whose", "which", "can", "could",
-    "would", "will", "is", "are", "does", "do", "did", "should", "might", "tell me",
-    "give me", "show me", "explain", "describe", "define", "clarify", "elaborate",
-    "walk me through", "break down", "demonstrate", "illustrate", "outline",
-    "summarize", "provide", "list", "enumerate", "compare", "contrast", "analyze",
-    "solve", "implement", "code", "design", "optimize", "debug", "test",
-    "present", "prepare", "discuss", "review", "evaluate", "assess", "justify",
-    "prove", "verify", "check", "calculate", "compute", "estimate", "predict"
+    "what",
+    "how",
+    "why",
+    "when",
+    "where",
+    "who",
+    "whose",
+    "which",
+    "can",
+    "could",
+    "would",
+    "will",
+    "is",
+    "are",
+    "does",
+    "do",
+    "did",
+    "should",
+    "might",
+    "tell me",
+    "give me",
+    "show me",
+    "explain",
+    "describe",
+    "define",
+    "clarify",
+    "elaborate",
+    "walk me through",
+    "break down",
+    "demonstrate",
+    "illustrate",
+    "outline",
+    "summarize",
+    "provide",
+    "list",
+    "enumerate",
+    "compare",
+    "contrast",
+    "analyze",
+    "solve",
+    "implement",
+    "code",
+    "design",
+    "optimize",
+    "debug",
+    "test",
+    "present",
+    "prepare",
+    "discuss",
+    "review",
+    "evaluate",
+    "assess",
+    "justify",
+    "prove",
+    "verify",
+    "check",
+    "calculate",
+    "compute",
+    "estimate",
+    "predict",
   ];
 
   const intentKeywords = [
-    "question", "answer", "solution", "example", "approach", "method", "technique",
-    "algorithm", "data structure", "complexity", "time", "space", "performance",
-    "step", "steps", "process", "procedure", "strategy", "pattern", "best practice",
-    "interview", "presentation", "slide", "meeting", "agenda", "point", "detail",
-    "definition", "meaning", "concept", "theory", "application", "use case",
-    "problem", "exercise", "task", "challenge", "query", "request", "help",
-    "assistance", "guide", "tutorial", "overview", "intro", "introduction"
+    "question",
+    "answer",
+    "solution",
+    "example",
+    "approach",
+    "method",
+    "technique",
+    "algorithm",
+    "data structure",
+    "complexity",
+    "time",
+    "space",
+    "performance",
+    "step",
+    "steps",
+    "process",
+    "procedure",
+    "strategy",
+    "pattern",
+    "best practice",
+    "interview",
+    "presentation",
+    "slide",
+    "meeting",
+    "agenda",
+    "point",
+    "detail",
+    "definition",
+    "meaning",
+    "concept",
+    "theory",
+    "application",
+    "use case",
+    "problem",
+    "exercise",
+    "task",
+    "challenge",
+    "query",
+    "request",
+    "help",
+    "assistance",
+    "guide",
+    "tutorial",
+    "overview",
+    "intro",
+    "introduction",
   ];
 
   const queryEndings = ["?", "please", "..."];
 
-  const startsWithQuestion = questionStarters.some(starter =>
-    cleanedTranscript.startsWith(starter + " ") || cleanedTranscript === starter
+  const startsWithQuestion = questionStarters.some(
+    (starter) =>
+      cleanedTranscript.startsWith(starter + " ") ||
+      cleanedTranscript === starter
   );
 
-  const containsIntent = intentKeywords.some(keyword =>
-    cleanedTranscript.includes(" " + keyword + " ") ||
-    cleanedTranscript.endsWith(" " + keyword) ||
-    cleanedTranscript.startsWith(keyword + " ")
+  const containsIntent = intentKeywords.some(
+    (keyword) =>
+      cleanedTranscript.includes(" " + keyword + " ") ||
+      cleanedTranscript.endsWith(" " + keyword) ||
+      cleanedTranscript.startsWith(keyword + " ")
   );
 
-  const endsWithQuery = queryEndings.some(ending =>
+  const endsWithQuery = queryEndings.some((ending) =>
     cleanedTranscript.endsWith(ending)
   );
 
   const contextualTriggers = [
-    "sort", "search", "traverse", "insert", "delete", "merge", "heap", "tree",
-    "graph", "array", "list", "stack", "queue", "hash", "map", "set", "binary",
-    "dynamic", "greedy", "recursion", "backtracking", "divide and conquer",
-    "big o", "runtime", "space complexity", "leetcode", "hackerrank", "codeforces",
-    "system design", "architecture", "scalability", "database", "api", "network",
-    "next slide", "previous slide", "current slide", "agenda item", "action item",
-    "meeting notes", "key takeaway", "summary of", "overview of"
+    "sort",
+    "search",
+    "traverse",
+    "insert",
+    "delete",
+    "merge",
+    "heap",
+    "tree",
+    "graph",
+    "array",
+    "list",
+    "stack",
+    "queue",
+    "hash",
+    "map",
+    "set",
+    "binary",
+    "dynamic",
+    "greedy",
+    "recursion",
+    "backtracking",
+    "divide and conquer",
+    "big o",
+    "runtime",
+    "space complexity",
+    "leetcode",
+    "hackerrank",
+    "codeforces",
+    "system design",
+    "architecture",
+    "scalability",
+    "database",
+    "api",
+    "network",
+    "next slide",
+    "previous slide",
+    "current slide",
+    "agenda item",
+    "action item",
+    "meeting notes",
+    "key takeaway",
+    "summary of",
+    "overview of",
   ];
 
-  const containsContext = contextualTriggers.some(trigger =>
-    cleanedTranscript.includes(" " + trigger + " ") ||
-    cleanedTranscript.endsWith(" " + trigger) ||
-    cleanedTranscript.startsWith(trigger + " ")
+  const containsContext = contextualTriggers.some(
+    (trigger) =>
+      cleanedTranscript.includes(" " + trigger + " ") ||
+      cleanedTranscript.endsWith(" " + trigger) ||
+      cleanedTranscript.startsWith(trigger + " ")
   );
 
   const words = cleanedTranscript.split(/\s+/);
-  const hasVerbNounCombo = questionStarters.some(starter =>
-    words[0] === starter && words.length > 1 &&
-    !["i", "you", "he", "she", "it", "we", "they"].includes(words[1])
+  const hasVerbNounCombo = questionStarters.some(
+    (starter) =>
+      words[0] === starter &&
+      words.length > 1 &&
+      !["i", "you", "he", "she", "it", "we", "they"].includes(words[1])
   );
 
   return (
@@ -229,23 +376,22 @@ function processBufferedTranscription(transcript) {
       action: "displayTranscript",
       transcript: transcript,
       isFinal: true,
-      windowId: transcriptWindowId
+      windowId: transcriptWindowId,
     });
   } else {
     chrome.runtime.sendMessage({
       action: "displayTranscript",
       transcript: transcript,
       isFinal: false,
-      windowId: transcriptWindowId
+      windowId: transcriptWindowId,
     });
   }
 }
 
-
 document.getElementById("notesUpload").addEventListener("change", (event) => {
   const file = event.target.files[0];
   if (file) {
-    const fileType = file.name.split('.').pop().toLowerCase();
+    const fileType = file.name.split(".").pop().toLowerCase();
     const documentContentDiv = document.getElementById("documentContent");
     const fileNameSpan = document.getElementById("fileName");
 
@@ -278,7 +424,7 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
     fileElement.appendChild(contentContainer);
 
     // Process file based on type
-    if (fileType === 'txt') {
+    if (fileType === "txt") {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target.result;
@@ -293,15 +439,14 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
         );
       };
       reader.readAsText(file);
-    }
-    else if (fileType === 'pdf') {
+    } else if (fileType === "pdf") {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           const typedArray = new Uint8Array(e.target.result);
           const loadingTask = pdfjsLib.getDocument(typedArray);
           const pdf = await loadingTask.promise;
-          let textContent = '';
+          let textContent = "";
 
           contentElement.textContent = "Loading PDF content...";
           documentContentDiv.appendChild(fileElement);
@@ -310,7 +455,8 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
             const page = await pdf.getPage(i);
             const text = await page.getTextContent();
             textContent += `--- Page ${i} ---\n`;
-            textContent += text.items.map(item => item.str).join(' ') + '\n\n';
+            textContent +=
+              text.items.map((item) => item.str).join(" ") + "\n\n";
           }
 
           contentElement.textContent = textContent;
@@ -328,7 +474,7 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
         }
       };
       reader.readAsArrayBuffer(file);
-    } else if (fileType === 'pptx') {
+    } else if (fileType === "pptx") {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
@@ -338,11 +484,12 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
           documentContentDiv.appendChild(fileElement);
 
           const zip = await JSZip.loadAsync(arrayBuffer);
-          let textContent = '';
+          let textContent = "";
 
           // PPTX files store slide content in XML files
-          const slideFiles = Object.keys(zip.files).filter(filename =>
-            filename.match(/^ppt\/slides\/slide\d+\.xml$/));
+          const slideFiles = Object.keys(zip.files).filter((filename) =>
+            filename.match(/^ppt\/slides\/slide\d+\.xml$/)
+          );
 
           for (const slideFile of slideFiles.sort((a, b) => {
             const numA = parseInt(a.match(/slide(\d+)\.xml/)[1]);
@@ -362,10 +509,16 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
             textContent += "\n\n";
           }
 
-          contentElement.textContent = textContent || "No text extracted from PPTX.";
+          contentElement.textContent =
+            textContent || "No text extracted from PPTX.";
 
           chrome.runtime.sendMessage(
-            { action: "uploadNotes", notes: textContent, fileName: file.name, fileType: 'pptx' },
+            {
+              action: "uploadNotes",
+              notes: textContent,
+              fileName: file.name,
+              fileType: "pptx",
+            },
             (response) => {
               document.getElementById("status").textContent = response.status;
             }
@@ -382,10 +535,13 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
       fileNameSpan.textContent = `Uploaded: ${file.name} (Unsupported)`;
     }
 
-    document.getElementById("status").textContent = "File uploaded successfully.";
+    document.getElementById("status").textContent =
+      "File uploaded successfully.";
   }
 });
 
-document.getElementById("generatePresentation").addEventListener("click", () => {
-  chrome.runtime.sendMessage({ action: "getPresentation" });
-});
+document
+  .getElementById("generatePresentation")
+  .addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "openPresentationWindow" });
+  });
