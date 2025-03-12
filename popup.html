@@ -1,206 +1,207 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <title>Wingman</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        width: 250px;
+        padding: 15px;
+        margin: 0;
+        background: #0a0a0a;
+        font-family: "Poppins", sans-serif;
+        color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.5s ease-out;
+      }
 
-<head>
-  <title>Wingman</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      width: 250px;
-      padding: 15px;
-      margin: 0;
-      background: #0a0a0a;
-      font-family: "Poppins", sans-serif;
-      color: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-      animation: fadeIn 0.5s ease-out;
-    }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
 
-    @keyframes fadeIn {
-      from {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      button {
+        background: linear-gradient(135deg, #1f1f1f, #151515);
+        color: #ffffff;
+        border: 1px solid rgba(30, 144, 255, 0.2);
+        padding: 8px;
+        margin: 8px 0;
+        width: 100%;
+        border-radius: 6px;
+        font-family: "Poppins", sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(30, 144, 255, 0.1);
+      }
+
+      button:hover {
+        background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+        color: #1e90ff;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 12px rgba(30, 144, 255, 0.3);
+      }
+
+      button:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 4px rgba(30, 144, 255, 0.1);
+      }
+
+      .file-upload-container {
+        position: relative;
+        margin: 10px 0;
+        padding: 10px;
+        border: 2px dashed rgba(30, 144, 255, 0.2);
+        border-radius: 6px;
+        text-align: center;
+        transition: all 0.2s ease;
+      }
+
+      .file-upload-container:hover {
+        border-color: #1e90ff;
+        background: rgba(30, 144, 255, 0.1);
+      }
+
+      input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
         opacity: 0;
-        transform: translateY(-10px);
+        cursor: pointer;
       }
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
+      .upload-label {
+        font-size: 11px;
+        color: #ffffff;
+        display: block;
+        margin-bottom: 3px;
       }
-    }
 
-    .container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+      .file-types {
+        font-size: 9px;
+        color: #ffffff;
+      }
 
-    button {
-      background: linear-gradient(135deg, #1f1f1f, #151515);
-      color: #ffffff;
-      border: 1px solid rgba(30, 144, 255, 0.2);
-      padding: 8px;
-      margin: 8px 0;
-      width: 100%;
-      border-radius: 6px;
-      font-family: "Poppins", sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(30, 144, 255, 0.1);
-    }
+      #status {
+        display: block;
+        text-align: center;
+        font-size: 10px;
+        color: #ffffff;
+        margin: 5px 0;
+      }
 
-    button:hover {
-      background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
-      color: #1e90ff;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 12px rgba(30, 144, 255, 0.3);
-    }
+      /* Document container styles */
+      #documentContent {
+        margin-top: 10px;
+      }
 
-    button:active {
-      transform: translateY(1px);
-      box-shadow: 0 1px 4px rgba(30, 144, 255, 0.1);
-    }
+      .file-item {
+        margin-bottom: 12px;
+      }
 
-    .file-upload-container {
-      position: relative;
-      margin: 10px 0;
-      padding: 10px;
-      border: 2px dashed rgba(30, 144, 255, 0.2);
-      border-radius: 6px;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
+      .file-name {
+        display: block;
+        font-size: 11px;
+        color: #ffffff;
+        font-weight: 600;
+        padding: 5px 0;
+        margin-bottom: 4px;
+        border-bottom: 1px solid rgba(30, 144, 255, 0.2);
+      }
 
-    .file-upload-container:hover {
-      border-color: #1e90ff;
-      background: rgba(30, 144, 255, 0.1);
-    }
+      .file-icon {
+        margin-right: 5px;
+      }
 
-    input[type="file"] {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
+      .file-content-container {
+        max-height: 100px;
+        overflow-y: auto;
+        background: #151515;
+        border-radius: 4px;
+        padding: 6px;
+        border: 1px solid rgba(30, 144, 255, 0.2);
+      }
 
-    .upload-label {
-      font-size: 11px;
-      color: #ffffff;
-      display: block;
-      margin-bottom: 3px;
-    }
+      .file-content {
+        font-size: 10px;
+        color: #e0e0e0;
+        line-height: 1.4;
+        font-family: "Courier New", monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
 
-    .file-types {
-      font-size: 9px;
-      color: #ffffff;
-    }
+      /* Scrollbar styling */
+      .file-content-container::-webkit-scrollbar {
+        width: 6px;
+      }
 
-    #status {
-      display: block;
-      text-align: center;
-      font-size: 10px;
-      color: #ffffff;
-      margin: 5px 0;
-    }
+      .file-content-container::-webkit-scrollbar-track {
+        background: #151515;
+        border-radius: 3px;
+      }
 
-    /* Document container styles */
-    #documentContent {
-      margin-top: 10px;
-    }
+      .file-content-container::-webkit-scrollbar-thumb {
+        background: rgba(30, 144, 255, 0.4);
+        border-radius: 3px;
+      }
 
-    .file-item {
-      margin-bottom: 12px;
-    }
+      .file-content-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(30, 144, 255, 0.6);
+      }
 
-    .file-name {
-      display: block;
-      font-size: 11px;
-      color: #ffffff;
-      font-weight: 600;
-      padding: 5px 0;
-      margin-bottom: 4px;
-      border-bottom: 1px solid rgba(30, 144, 255, 0.2);
-    }
+      /* Upload file name display */
+      #fileName {
+        font-size: 10px;
+        color: #4ad505;
+        display: block;
+        margin: 5px 0;
+        text-align: center;
+      }
+    </style>
+    <script src="pdf.min.js"></script>
+    <script src="./jszip.min.js"></script>
+    <script src="./pptxgen.min.js"></script>
+  </head>
 
-    .file-icon {
-      margin-right: 5px;
-    }
+  <body>
+    <div class="container">
+      <img src="./xoegan.png" alt="Wingman Logo" width="50" />
+      <h1 style="font-weight: 100; font-size: small">Wingman</h1>
+    </div>
+    <button id="toggleButton">Start Assistant</button>
+    <span id="status"></span>
+    <div class="file-upload-container">
+      <span class="upload-label">Upload Docs</span>
+      <span class="file-types">.txt, .pdf, .pptx, .ppt</span>
+      <input type="file" id="notesUpload" accept=".txt,.pdf, .pptx, .ppt" />
+    </div>
+    <span id="fileName" class="file-name"></span>
 
-    .file-content-container {
-      max-height: 100px;
-      overflow-y: auto;
-      background: #151515;
-      border-radius: 4px;
-      padding: 6px;
-      border: 1px solid rgba(30, 144, 255, 0.2);
-    }
+    <!-- Document content area with separate files -->
+    <div id="documentContent"></div>
 
-    .file-content {
-      font-size: 10px;
-      color: #e0e0e0;
-      line-height: 1.4;
-      font-family: 'Courier New', monospace;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    /* Scrollbar styling */
-    .file-content-container::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .file-content-container::-webkit-scrollbar-track {
-      background: #151515;
-      border-radius: 3px;
-    }
-
-    .file-content-container::-webkit-scrollbar-thumb {
-      background: rgba(30, 144, 255, 0.4);
-      border-radius: 3px;
-    }
-
-    .file-content-container::-webkit-scrollbar-thumb:hover {
-      background: rgba(30, 144, 255, 0.6);
-    }
-
-    /* Upload file name display */
-    #fileName {
-      font-size: 10px;
-      color: #4ad505;
-      display: block;
-      margin: 5px 0;
-      text-align: center;
-    }
-  </style>
-  <script src="pdf.min.js"></script>
-  <script src="./jszip.min.js"></script>
-  <script src="./pptxgen.min.js"></script>
-</head>
-
-<body>
-  <div class="container">
-    <img src="./xoegan.png" alt="Wingman Logo" width="50" />
-    <h1 style="font-weight: 100;font-size: small">Wingman</h1>
-  </div>
-  <button id="toggleButton">Start Assistant</button>
-  <span id="status"></span>
-  <div class="file-upload-container">
-    <span class="upload-label">Upload Docs</span>
-    <span class="file-types">.txt, .pdf, .pptx</span>
-    <input type="file" id="notesUpload" accept=".txt,.pdf, .pptx" />
-  </div>
-  <span id="fileName" class="file-name"></span>
-
-  <!-- Document content area with separate files -->
-  <div id="documentContent"></div>
-
-  <button id="generatePresentation">Generate Presentation</button>
-  <script src="popup.js"></script>
-</body>
-
+    <button id="generatePresentation">Generate Presentation</button>
+    <script src="popup.js"></script>
+  </body>
 </html>
