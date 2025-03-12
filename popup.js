@@ -474,7 +474,7 @@ document.getElementById("notesUpload").addEventListener("change", (event) => {
         }
       };
       reader.readAsArrayBuffer(file);
-    } else if (fileType === "pptx") {
+    } else if (fileType === "pptx" || fileType === "ppt") {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
