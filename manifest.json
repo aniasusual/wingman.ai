@@ -2,7 +2,22 @@
   "manifest_version": 3,
   "name": "Wingman",
   "version": "1.0",
-  "permissions": ["activeTab", "storage", "tabCapture", "scripting"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabCapture",
+    "scripting",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://*.firebaseapp.com/*",
+    "https://*.googleapis.com/*",
+    "https://*.gstatic.com/*"
+  ],
+  "oauth2": {
+    "client_id": "22885003383-p7m9ihpo6oe269cm33k7jg30gd8gd40v.apps.googleusercontent.com",
+    "scopes": ["email", "profile"]
+  },
   "background": {
     "service_worker": "background.js"
   },
