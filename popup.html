@@ -170,37 +170,40 @@
         background: rgba(30, 144, 255, 0.6);
       }
 
-      /* Upload file name display */
-      #fileName {
-        font-size: 10px;
-        color: #4ad505;
-        display: block;
-        margin: 5px 0;
-        text-align: center;
-      }
-    </style>
-    <script src="pdf.min.js"></script>
-    <script src="./jszip.min.js"></script>
-    <script src="./pptxgen.min.js"></script>
-  </head>
+        /* Upload file name display */
+        #fileName {
+          font-size: 10px;
+          color: #4ad505;
+          display: block;
+          margin: 5px 0;
+          text-align: center;
+        }
+      </style>
+      <script src="./lib/pdf.min.js"></script>
+      <script src="./lib/jszip.min.js"></script>
+      <script src="./lib/pptxgen.min.js"></script>
+    </head>
 
-  <body>
-    <div class="container">
-      <img src="./xoegan.png" alt="Wingman Logo" width="50" />
-      <h1 style="font-weight: 100; font-size: small">Wingman</h1>
-    </div>
-    <button id="toggleButton">Start Assistant</button>
-    <span id="status"></span>
-    <div class="file-upload-container">
-      <span class="upload-label">Upload Docs</span>
-      <span class="file-types">.txt, .pdf, .pptx, .ppt</span>
-      <input type="file" id="notesUpload" accept=".txt,.pdf, .pptx, .ppt" />
-    </div>
-    <span id="fileName" class="file-name"></span>
+    <body>
+      <div class="container">
+        <img src="./icons/xoegan.png" alt="Wingman Logo" width="50" />
+        <h1 style="font-weight: 100;  font-size: small">Wingman</h1>
+      </div>
+      <button id="toggleButton">Start Assistant</button>
+      <span id="status"></span>
+      <div class="file-upload-container">
+        <span class="upload-label">Upload Docs</span>
+        <span class="file-types">.txt, .pdf, .pptx, .ppt</span>
+        <input type="file" id="notesUpload" accept=".txt,.pdf, .pptx, .ppt" />
+      </div>
+      <span id="fileName" class="file-name"></span>
 
-    <!-- Document content area with separate files -->
-    <div id="documentContent"></div>
+      <!-- Document content area with separate files -->
+      <div id="documentContent"></div>
 
+    <button id="generatePresentation">Generate Presentation</button>
+    <script src="popup.js"></script>
+  </body>
     <button id="generatePresentation">Generate Presentation</button>
     <script src="popup.js"></script>
   </body>

@@ -8,12 +8,13 @@ let transcriptionBuffer = "";
 let bufferTimeout = null;
 let transcriptWindowId = null; // Add this to track the new window
 
+
 // Ensure pdfjsLib is available globally
 if (typeof pdfjsLib === "undefined") {
   console.error("pdf.js not loaded correctly.");
   statusDiv.textContent = "Error: PDF processing unavailable.";
 } else {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; // Point to the local script
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "./lib/pdf.worker.min.js"; // Point to the local script
 }
 
 if (typeof JSZip === "undefined") {
@@ -164,211 +165,66 @@ toggleButton.addEventListener("click", () => {
   }
 });
 
-// Rest of your shouldQueryAPI function remains unchanged
-function shouldQueryAPI(transcript) {
-  const cleanedTranscript = transcript.trim().toLowerCase();
-  if (!cleanedTranscript) return false;
+let modelReady = false;
+let sandboxIframe = null;
 
-  const questionStarters = [
-    "what",
-    "how",
-    "why",
-    "when",
-    "where",
-    "who",
-    "whose",
-    "which",
-    "can",
-    "could",
-    "would",
-    "will",
-    "is",
-    "are",
-    "does",
-    "do",
-    "did",
-    "should",
-    "might",
-    "tell me",
-    "give me",
-    "show me",
-    "explain",
-    "describe",
-    "define",
-    "clarify",
-    "elaborate",
-    "walk me through",
-    "break down",
-    "demonstrate",
-    "illustrate",
-    "outline",
-    "summarize",
-    "provide",
-    "list",
-    "enumerate",
-    "compare",
-    "contrast",
-    "analyze",
-    "solve",
-    "implement",
-    "code",
-    "design",
-    "optimize",
-    "debug",
-    "test",
-    "present",
-    "prepare",
-    "discuss",
-    "review",
-    "evaluate",
-    "assess",
-    "justify",
-    "prove",
-    "verify",
-    "check",
-    "calculate",
-    "compute",
-    "estimate",
-    "predict",
-  ];
+function initializeSandbox() {
+  if (!modelReady && !sandboxIframe) {
+    console.log("Initializing sandbox...");
+    const sandboxUrl = chrome.runtime.getURL("sandbox.html");
 
-  const intentKeywords = [
-    "question",
-    "answer",
-    "solution",
-    "example",
-    "approach",
-    "method",
-    "technique",
-    "algorithm",
-    "data structure",
-    "complexity",
-    "time",
-    "space",
-    "performance",
-    "step",
-    "steps",
-    "process",
-    "procedure",
-    "strategy",
-    "pattern",
-    "best practice",
-    "interview",
-    "presentation",
-    "slide",
-    "meeting",
-    "agenda",
-    "point",
-    "detail",
-    "definition",
-    "meaning",
-    "concept",
-    "theory",
-    "application",
-    "use case",
-    "problem",
-    "exercise",
-    "task",
-    "challenge",
-    "query",
-    "request",
-    "help",
-    "assistance",
-    "guide",
-    "tutorial",
-    "overview",
-    "intro",
-    "introduction",
-  ];
-
-  const queryEndings = ["?", "please", "..."];
-
-  const startsWithQuestion = questionStarters.some(
-    (starter) =>
-      cleanedTranscript.startsWith(starter + " ") ||
-      cleanedTranscript === starter
-  );
-
-  const containsIntent = intentKeywords.some(
-    (keyword) =>
-      cleanedTranscript.includes(" " + keyword + " ") ||
-      cleanedTranscript.endsWith(" " + keyword) ||
-      cleanedTranscript.startsWith(keyword + " ")
-  );
-
-  const endsWithQuery = queryEndings.some((ending) =>
-    cleanedTranscript.endsWith(ending)
-  );
-
-  const contextualTriggers = [
-    "sort",
-    "search",
-    "traverse",
-    "insert",
-    "delete",
-    "merge",
-    "heap",
-    "tree",
-    "graph",
-    "array",
-    "list",
-    "stack",
-    "queue",
-    "hash",
-    "map",
-    "set",
-    "binary",
-    "dynamic",
-    "greedy",
-    "recursion",
-    "backtracking",
-    "divide and conquer",
-    "big o",
-    "runtime",
-    "space complexity",
-    "leetcode",
-    "hackerrank",
-    "codeforces",
-    "system design",
-    "architecture",
-    "scalability",
-    "database",
-    "api",
-    "network",
-    "next slide",
-    "previous slide",
-    "current slide",
-    "agenda item",
-    "action item",
-    "meeting notes",
-    "key takeaway",
-    "summary of",
-    "overview of",
-  ];
-
-  const containsContext = contextualTriggers.some(
-    (trigger) =>
-      cleanedTranscript.includes(" " + trigger + " ") ||
-      cleanedTranscript.endsWith(" " + trigger) ||
-      cleanedTranscript.startsWith(trigger + " ")
-  );
-
-  const words = cleanedTranscript.split(/\s+/);
-  const hasVerbNounCombo = questionStarters.some(
-    (starter) =>
-      words[0] === starter &&
-      words.length > 1 &&
-      !["i", "you", "he", "she", "it", "we", "they"].includes(words[1])
-  );
-
-  return (
-    startsWithQuestion ||
-    endsWithQuery ||
-    containsIntent ||
-    containsContext ||
-    hasVerbNounCombo
-  );
+    sandboxIframe = document.createElement("iframe");
+    sandboxIframe.src = sandboxUrl;
+    sandboxIframe.style.display = "none";
+    document.body.appendChild(sandboxIframe);
+  }
 }
+
+window.addEventListener("message", (event) => {
+  if (event.data && event.data.action === "modelLoaded") {
+    if (event.data.status === "success") {
+      modelReady = true;
+      console.log("Sandbox model ready.");
+    } else {
+      console.error("Sandbox model failed to load:", event.data.error);
+      document.getElementById("status").textContent = "Error initializing model.";
+    }
+  } else if (event.data && event.data.action === "predictionResult") {
+    const { callbackId, result } = event.data;
+    const callback = pendingPredictions[callbackId];
+    if (callback) {
+      callback(result);
+      delete pendingPredictions[callbackId];
+    }
+  }
+});
+
+const pendingPredictions = {};
+let callbackCounter = 0;
+
+async function shouldQueryAPI(transcript) {
+  if (!modelReady) {
+    console.error("Model not ready yet.");
+    return false;
+  }
+
+  return new Promise((resolve) => {
+    const callbackId = ++callbackCounter;
+    pendingPredictions[callbackId] = resolve;
+
+    sandboxIframe.contentWindow.postMessage({
+      action: "predict",
+      transcript,
+      callbackId,
+    }, "*");
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initializeSandbox();
+});
+
+
 
 function processBufferedTranscription(transcript) {
   if (shouldQueryAPI(transcript)) {

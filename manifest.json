@@ -2,38 +2,39 @@
   "manifest_version": 3,
   "name": "Wingman",
   "version": "1.0",
-  "permissions": [
-    "activeTab",
-    "storage",
-    "tabCapture",
-    "scripting"
-  ],
+  "permissions": ["activeTab", "storage", "tabCapture", "scripting"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "xoegan.png"
+    "default_icon": "./icons/xoegan.png"
   },
   "icons": {
-    "16": "xoegan.png",
-    "48": "xoegan.png",
-    "128": "xoegan.png"
+    "16": "./icons/xoegan.png",
+    "48": "./icons/xoegan.png",
+    "128": "./icons/xoegan.png"
   },
   "web_accessible_resources": [
     {
       "resources": [
         "transcript_window.html",
         "transcript_window.js",
-        "xoegan.png",
-        "pdf.min.js"
+        "./icons/xoegan.png",
+        "./lib/pdf.min.js",
+        "lib/tf.min.js",
+        "models/shouldQuery/model.json",
+        "models/shouldQuery/*.bin",
+        "sandbox.html"
       ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'"
+  },
+  "sandbox": {
+    "pages": ["sandbox.html"]
   }
 }

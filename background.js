@@ -1,7 +1,10 @@
+//background.js
 let activeTabId = null;
 let transcriptWindowId = null; // Add this to track the window
+// let sandboxLoaded = false;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+
   if (message.action === "uploadNotes") {
     // console.log("notes: ", message.notes);
     chrome.storage.local.set({ notes: message.notes }, () => {
