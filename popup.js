@@ -481,4 +481,4 @@ document
   .addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "openPresentationWindow" });
   });
-});
+
