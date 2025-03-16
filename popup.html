@@ -178,6 +178,29 @@
           margin: 5px 0;
           text-align: center;
         }
+      /*LOGIN STYLES*/
+      .hidden {
+        display: none;
+      }
+      .login-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .login-button {
+        background: #1e90ff;
+        border: none;
+        color: #fff;
+        padding: 8px 10px;
+        margin: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: "Poppins", sans-serif;
+        font-size: 12px;
+        transition: background 0.3s;
+      }
+      .login-button:hover {
+        background: #187bcd;
+      }
       </style>
       <script src="./lib/pdf.min.js"></script>
       <script src="./lib/jszip.min.js"></script>
@@ -185,22 +208,35 @@
     </head>
 
     <body>
-      <div class="container">
-        <img src="./icons/xoegan.png" alt="Wingman Logo" width="50" />
-        <h1 style="font-weight: 100;  font-size: small">Wingman</h1>
-      </div>
-      <button id="toggleButton">Start Assistant</button>
-      <span id="status"></span>
-      <div class="file-upload-container">
-        <span class="upload-label">Upload Docs</span>
-        <span class="file-types">.txt, .pdf, .pptx, .ppt</span>
-        <input type="file" id="notesUpload" accept=".txt,.pdf, .pptx, .ppt" />
-      </div>
-      <span id="fileName" class="file-name"></span>
+    <div class="login-container" id="loginContainer">
+      <h2 style="font-size: 14px; font-weight: 300">Login to Wingman</h2>
+      <button class="login-button" id="googleSignIn">
+        Sign In with Google
+      </button>
+    </div>
+
+    <div id="mainContent" class="hidden">
+        <div class="container">
+          <img src="./icons/xoegan.png" alt="Wingman Logo" width="50" />
+          <h1 style="font-weight: 100;  font-size: small">Wingman</h1>
+        </div>
+        <!-- <button id="logoutButton" class="login-button" style="margin-bottom: 15px;">Logout</button> -->
+        <button id="toggleButton">Start Assistant</button>
+        <span id="status"></span>
+        <div class="file-upload-container">
+          <span class="upload-label">Upload Docs</span>
+          <span class="file-types">.txt, .pdf, .pptx, .ppt</span>
+          <input type="file" id="notesUpload" accept=".txt,.pdf, .pptx, .ppt" />
+        </div>
+        <span id="fileName" class="file-name"></span>
 
       <!-- Document content area with separate files -->
       <div id="documentContent"></div>
 
-    <button id="generatePresentation">Generate Presentation</button>
+      <button id="generatePresentation">Generate Presentation</button>
+    </div>
+    <script src="firebase-app-compat.js"></script>
+    <script src="/firebase-auth-compat.js"></script>
+    <!-- <script src="/firebase-firestore-compat.js"></script> -->
     <script src="popup.js"></script>
 </html>
