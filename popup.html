@@ -201,6 +201,29 @@
       .login-button:hover {
         background: #187bcd;
       }
+      /*LOGIN STYLES*/
+      .hidden {
+        display: none;
+      }
+      .login-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .login-button {
+        background: #1e90ff;
+        border: none;
+        color: #fff;
+        padding: 8px 10px;
+        margin: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: "Poppins", sans-serif;
+        font-size: 12px;
+        transition: background 0.3s;
+      }
+      .login-button:hover {
+        background: #187bcd;
+      }
       </style>
       <script src="./lib/pdf.min.js"></script>
       <script src="./lib/jszip.min.js"></script>
@@ -208,14 +231,14 @@
     </head>
 
     <body>
-    <div class="login-container" id="loginContainer">
+    <!-- <div class="login-container" id="loginContainer">
       <h2 style="font-size: 14px; font-weight: 300">Login to Wingman</h2>
       <button class="login-button" id="googleSignIn">
         Sign In with Google
       </button>
-    </div>
+    </div> -->
 
-    <div id="mainContent" class="hidden">
+    <!-- <div id="mainContent" class="hidden"> -->
         <div class="container">
           <img src="./icons/xoegan.png" alt="Wingman Logo" width="50" />
           <h1 style="font-weight: 100;  font-size: small">Wingman</h1>
@@ -234,7 +257,7 @@
       <div id="documentContent"></div>
 
       <button id="generatePresentation">Generate Presentation</button>
-    </div>
+    <!-- </div> -->
     <script src="firebase-app-compat.js"></script>
     <script src="/firebase-auth-compat.js"></script>
     <!-- <script src="/firebase-firestore-compat.js"></script> -->
