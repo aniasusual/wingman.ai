@@ -8,80 +8,77 @@ let transcriptionBuffer = "";
 let bufferTimeout = null;
 let transcriptWindowId = null; // Add this to track the new window
 
-// document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
+  initializeSandbox();
 
-//   initializeSandbox();
+  const firebaseConfig = {
+    apiKey: "AIzaSyDl5Dcx2FBfmzdPSQ_LCPXrXvA9NUGttjU",
+    authDomain: "wingman-3d684.firebaseapp.com",
+    projectId: "wingman-3d684",
+    storageBucket: "wingman-3d684.appspot.com",
+    appId: "1:156676475531:web:93faa1e23674e68626e28e",
+  };
 
-//   const firebaseConfig = {
-//     apiKey: "AIzaSyDl5Dcx2FBfmzdPSQ_LCPXrXvA9NUGttjU",
-//     authDomain: "wingman-3d684.firebaseapp.com",
-//     projectId: "wingman-3d684",
-//     storageBucket: "wingman-3d684.appspot.com",
-//     appId: "1:156676475531:web:93faa1e23674e68626e28e",
-//   };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  // const db = firebase.firestore();
 
-//   firebase.initializeApp(firebaseConfig);
-//   const auth = firebase.auth();
-//   // const db = firebase.firestore();
+  const loginContainer = document.getElementById("loginContainer");
+  const mainContent = document.getElementById("mainContent");
+  const googleSignIn = document.getElementById("googleSignIn");
+  // const logoutButton = document.getElementById("logoutButton");
 
-//   const loginContainer = document.getElementById("loginContainer");
-//   const mainContent = document.getElementById("mainContent");
-//   const googleSignIn = document.getElementById("googleSignIn");
-//   // const logoutButton = document.getElementById("logoutButton");
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      loginContainer.classList.add("hidden");
+      mainContent.classList.remove("hidden");
+      console.log("User signed in:", user.email);
 
-//   auth.onAuthStateChanged((user) => {
-//     if (user) {
-//       loginContainer.classList.add("hidden");
-//       mainContent.classList.remove("hidden");
-//       console.log("User signed in:", user.email);
+      // Store user data in Firestore
+      // db.collection('users').doc(user.uid).set({
+      //   email: user.email,
+      //   lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+      // }, { merge: true })
+      // .catch((error) => {
+      //   console.error("Error storing user data:", error);
+      // });
+    } else {
+      loginContainer.classList.remove("hidden");
+      mainContent.classList.add("hidden");
+    }
+  });
 
-//       // Store user data in Firestore
-//       // db.collection('users').doc(user.uid).set({
-//       //   email: user.email,
-//       //   lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-//       // }, { merge: true })
-//       // .catch((error) => {
-//       //   console.error("Error storing user data:", error);
-//       // });
-//     } else {
-//       loginContainer.classList.remove("hidden");
-//       mainContent.classList.add("hidden");
-//     }
-//   });
+  // logoutButton.addEventListener("click", () => {
+  //   auth.signOut().then(() => {
+  //     console.log("User signed out");
+  //   }).catch((error) => {
+  //     console.error("Sign out error:", error);
+  //   });
+  // });
 
-//   // logoutButton.addEventListener("click", () => {
-//   //   auth.signOut().then(() => {
-//   //     console.log("User signed out");
-//   //   }).catch((error) => {
-//   //     console.error("Sign out error:", error);
-//   //   });
-//   // });
-
-//   googleSignIn.addEventListener("click", () => {
-//     chrome.identity.getAuthToken({ interactive: true }, function (token) {
-//       if (chrome.runtime.lastError) {
-//         console.error(chrome.runtime.lastError);
-//         return;
-//       }
-//       // Create credential with the token
-//       const credential = firebase.auth.GoogleAuthProvider.credential(
-//         null,
-//         token
-//       );
-//       // Sign in with credential
-//       auth
-//         .signInWithCredential(credential)
-//         .then((result) => {
-//           console.log("Successfully signed in with Firebase");
-//         })
-//         .catch((error) => {
-//           console.error("Firebase sign-in error:", error);
-//         });
-//     });
-//   });
-
-// });
-
+  googleSignIn.addEventListener("click", () => {
+    chrome.identity.getAuthToken({ interactive: true }, function (token) {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
+        return;
+      }
+      // Create credential with the token
+      const credential = firebase.auth.GoogleAuthProvider.credential(
+        null,
+        token
+      );
+      // Sign in with credential
+      auth
+        .signInWithCredential(credential)
+        .then((result) => {
+          console.log("Successfully signed in with Firebase");
+        })
+        .catch((error) => {
+          console.error("Firebase sign-in error:", error);
+        });
+    });
+  });
+});
 
 // Ensure pdfjsLib is available globally
 if (typeof pdfjsLib === "undefined") {
@@ -481,4 +478,3 @@ document
   .addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "openPresentationWindow" });
   });
-
