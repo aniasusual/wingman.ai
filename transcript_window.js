@@ -28,17 +28,11 @@ function createTranscriptEntry(transcript, answer, isCurrent = false) {
         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
         <path d="m15 5 4 4"/>
       </svg>
-      ${
-        isCurrent
-          ? `
-      <svg class="submit-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg class="submit-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 12h14"/>
         <path d="m12 5 7 7-7 7"/>
-      </svg>`
-          : ""
-      }
+      </svg>
     </div>
-    <button class="edit-submit-btn hidden">Submit</button>
   `;
 
   const answerSection = document.createElement("div");
@@ -52,16 +46,15 @@ function createTranscriptEntry(transcript, answer, isCurrent = false) {
   const editIcon = entryDiv.querySelector(".edit-icon");
   const submitIcon = entryDiv.querySelector(".submit-icon");
   const transcriptTextDiv = entryDiv.querySelector(".transcript-text");
-  const submitBtn = entryDiv.querySelector(".edit-submit-btn");
 
   editIcon.addEventListener("click", () => {
     transcriptTextDiv.contentEditable = "true";
     transcriptTextDiv.focus();
-    submitBtn.classList.remove("hidden");
+    submitIcon.classList.remove("hidden");
     transcriptTextDiv.style.border = "1px solid #4a8cb5";
   });
 
-  submitBtn.addEventListener("click", async () => {
+  submitIcon.addEventListener("click", async () => {
     const editedTranscript = transcriptTextDiv.textContent.trim();
     const newAnswer = await generateAnswer(editedTranscript);
     const cleanNewAnswer = newAnswer.replace(/^Response:\s*/i, "");
@@ -81,12 +74,13 @@ function createTranscriptEntry(transcript, answer, isCurrent = false) {
     }
 
     transcriptTextDiv.contentEditable = "false";
-    submitBtn.classList.add("hidden");
+    submitIcon.classList.add("hidden");
     transcriptTextDiv.style.border = "1px solid #444";
     updateTranscriptDisplay();
   });
 
-  if (submitIcon) {
+  if (isCurrent) {
+    submitIcon.classList.remove("hidden");
     submitIcon.addEventListener("click", async () => {
       const finalTranscript = transcriptTextDiv.textContent.trim();
       const answer = await generateAnswer(finalTranscript);
@@ -97,7 +91,7 @@ function createTranscriptEntry(transcript, answer, isCurrent = false) {
       updateTranscriptDisplay();
     });
   }
-
+ 
   return entryDiv;
 }
 

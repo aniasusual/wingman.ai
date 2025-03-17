@@ -171,21 +171,23 @@
       }
 
         /* Upload file name display */
-        #fileName {
-          font-size: 10px;
-          color: #4ad505;
-          display: block;
-          margin: 5px 0;
-          text-align: center;
-        }
+      #fileName {
+        font-size: 10px;
+        color: #4ad505;
+        display: block;
+        margin: 5px 0;
+        text-align: center;
+      }
       /*LOGIN STYLES*/
       .hidden {
         display: none;
       }
+
       .login-container {
         text-align: center;
         margin-top: 20px;
       }
+
       .login-button {
         background: #1e90ff;
         border: none;
@@ -198,32 +200,38 @@
         font-size: 12px;
         transition: background 0.3s;
       }
+
       .login-button:hover {
         background: #187bcd;
       }
-      /*LOGIN STYLES*/
-      .hidden {
+
+      /*LOADING CONTAINER STYLES*/
+      .loading-container { 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+      }
+      
+      .loading-container.hidden {
         display: none;
       }
-      .login-container {
-        text-align: center;
-        margin-top: 20px;
+      
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
       }
-      .login-button {
-        background: #1e90ff;
-        border: none;
-        color: #fff;
-        padding: 8px 10px;
-        margin: 5px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-family: "Poppins", sans-serif;
-        font-size: 12px;
-        transition: background 0.3s;
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
-      .login-button:hover {
-        background: #187bcd;
-      }
+
       </style>
       <script src="./lib/pdf.min.js"></script>
       <script src="./lib/jszip.min.js"></script>
@@ -231,11 +239,15 @@
     </head>
 
     <body>
-    <div class="login-container" id="loginContainer">
+    <div class="login-container hidden" id="loginContainer">
       <h2 style="font-size: 14px; font-weight: 300">Login to Wingman</h2>
       <button class="login-button" id="googleSignIn">
         Sign In with Google
       </button>
+    </div>
+    
+    <div class="loading-container" id="loadingContainer">
+      <div class="spinner"></div>
     </div>
 
     <div id="mainContent" class="hidden">
