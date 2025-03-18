@@ -25,10 +25,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loginContainer = document.getElementById("loginContainer");
   const mainContent = document.getElementById("mainContent");
+  const loadingContainer = document.getElementById("loadingContainer");
   const googleSignIn = document.getElementById("googleSignIn");
   // const logoutButton = document.getElementById("logoutButton");
 
+  // Show loading state initially
+  loadingContainer.classList.remove("hidden");
+  loginContainer.classList.add("hidden");
+  mainContent.classList.add("hidden");
+
   auth.onAuthStateChanged((user) => {
+    // Hide loading state
+    loadingContainer.classList.add("hidden");
+    
     if (user) {
       loginContainer.classList.add("hidden");
       mainContent.classList.remove("hidden");
