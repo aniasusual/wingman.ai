@@ -1,0 +1,54 @@
+<!-- selection_window.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Screen Selection</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+      #selectionCanvas {
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+      }
+      #confirmButton,
+      #cancelButton {
+        position: fixed;
+        bottom: 20px;
+        padding: 10px 20px;
+        background: #1e90ff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      #confirmButton {
+        right: 80px;
+      }
+      #cancelButton {
+        right: 20px;
+      }
+      #selectionRect {
+        position: absolute;
+        border: 2px dashed #1e90ff;
+        background: rgba(30, 144, 255, 0.1);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="selectionCanvas"></canvas>
+    <div id="selectionRect"></div>
+    <button id="confirmButton">Confirm</button>
+    <button id="cancelButton">Cancel</button>
+    <script src="selection_window.js"></script>
+  </body>
+</html>
