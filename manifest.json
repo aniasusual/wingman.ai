@@ -6,8 +6,12 @@
     "activeTab",
     "storage",
     "tabCapture",
+    "desktopCapture",
     "scripting",
-    "identity"
+    "tabs",
+    "identity",
+    "system.display",
+    "windows"
   ],
   "host_permissions": [
     "https://*.firebaseapp.com/*",
@@ -40,13 +44,18 @@
         "lib/tf.min.js",
         "models/shouldQuery/model.json",
         "models/shouldQuery/*.bin",
-        "sandbox.html"
+        "sandbox.html",
+        "lib/tessdata/*",
+        "lib/tesseract.min.js",
+        "lib/worker.min.js",
+        "selection_window.html",
+        "selection_window.js"
       ],
       "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+    "extension_pages": "script-src 'self'; object-src 'self'; worker-src 'self';",
     "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'"
   },
   "sandbox": {

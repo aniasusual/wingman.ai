@@ -236,27 +236,29 @@
       <script src="./lib/pdf.min.js"></script>
       <script src="./lib/jszip.min.js"></script>
       <script src="./lib/pptxgen.min.js"></script>
+      <script src="./lib/tesseract.min.js"></script>
     </head>
 
     <body>
-    <div class="login-container hidden" id="loginContainer">
+    <!-- <div class="login-container hidden" id="loginContainer">
       <h2 style="font-size: 14px; font-weight: 300">Login to Wingman</h2>
       <button class="login-button" id="googleSignIn">
         Sign In with Google
       </button>
-    </div>
+    </div> -->
     
-    <div class="loading-container" id="loadingContainer">
+    <!-- <div class="loading-container" id="loadingContainer">
       <div class="spinner"></div>
-    </div>
+    </div> -->
 
-    <div id="mainContent" class="hidden">
+    <!-- <div id="mainContent" class="hidden"> -->
         <div class="container">
           <img src="./icons/xoegan.png" alt="Wingman Logo" width="50" />
           <h1 style="font-weight: 100;  font-size: small">Wingman</h1>
         </div>
         <!-- <button id="logoutButton" class="login-button" style="margin-bottom: 15px;">Logout</button> -->
         <button id="toggleButton">Start Assistant</button>
+        <button id="selectScreenArea">Search Screen</button>
         <span id="status"></span>
         <div class="file-upload-container">
           <span class="upload-label">Upload Docs</span>
@@ -269,9 +271,9 @@
       <div id="documentContent"></div>
 
       <button id="generatePresentation">Generate Presentation</button>
-    </div>
-    <script src="/lib/firebase-app-compat.js"></script>
-    <script src="/lib/firebase-auth-compat.js"></script>
+    <!-- </div> -->
+    <!-- <script src="/lib/firebase-app-compat.js"></script>
+    <script src="/lib/firebase-auth-compat.js"></script> -->
     <!-- <script src="/lib/firebase-firestore-compat.js"></script> -->
     <script src="popup.js"></script>
 </html>
