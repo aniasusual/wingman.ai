@@ -45,11 +45,13 @@
         "models/shouldQuery/model.json",
         "models/shouldQuery/*.bin",
         "sandbox.html",
-        "lib/tessdata/*",
-        "lib/tesseract.min.js",
-        "lib/worker.min.js",
-        "selection_window.html",
-        "selection_window.js"
+        "./lib/tessdata/*",
+        "./lib/tesseract.min.js",
+        "./lib/worker.min.js",
+        "./lib/tesseract-core.wasm.js",
+        "./lib/tessdata/*.traineddata.gz",
+        "sandbox/ocr.html",
+        "sandbox/ocr.js"
       ],
       "matches": ["<all_urls>"]
     }
@@ -59,6 +61,6 @@
     "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'"
   },
   "sandbox": {
-    "pages": ["sandbox.html"]
+    "pages": ["sandbox.html", "ocr.html"]
   }
 }
