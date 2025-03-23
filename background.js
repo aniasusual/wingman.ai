@@ -5,13 +5,41 @@ let transcriptWindowId = null; // Add this to track the window
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
+  if (message.action === "captureScreen") {
+    // Get the active tab to provide as the context
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (!tabs || tabs.length === 0) {
+        console.error("No active tab found.");
+        sendResponse({ error: "No active tab available" });
+        return;
+      }
+
+      const activeTab = tabs[0];
+      chrome.desktopCapture.chooseDesktopMedia(
+        ["screen", "window", "tab"],
+        activeTab, // Pass the active tab instead of null or sender.tab
+        (streamId) => {
+          if (chrome.runtime.lastError) {
+            console.error("Desktop capture error:", chrome.runtime.lastError.message);
+            sendResponse({ error: chrome.runtime.lastError.message });
+          } else if (streamId) {
+            console.log("Stream ID received:", streamId);
+            sendResponse({ streamId: streamId });
+          } else {
+            console.log("User canceled screen selection");
+            sendResponse({ error: "Screen selection canceled" });
+          }
+        }
+      );
+    });
+    return true; // Keep the message channel open for async response
+  }
+
   if (message.action === "openSelectionWindow") {
     chrome.system.display.getInfo((displays) => {
-      const primaryDisplay = displays[0]; // Use the primary display
+      const primaryDisplay = displays[0];
       const width = primaryDisplay.bounds.width;
       const height = primaryDisplay.bounds.height;
-
-      console.log("URL:", chrome.runtime.getURL("selection_window.html"));
 
       chrome.windows.create(
         {
@@ -21,14 +49,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           height: height,
           left: 0,
           top: 0,
-          // state: "fullscreen",
         },
         (window) => {
           if (chrome.runtime.lastError) {
-            console.error("Error creating window:", chrome.runtime.lastError);
+            console.error("Error creating window:", chrome.runtime.lastError.message);
             sendResponse({ error: chrome.runtime.lastError.message });
           } else {
-            console.log("window: ", window);
+            console.log("Window created:", window.id);
             sendResponse({ windowId: window.id });
           }
         }
@@ -37,32 +64,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // NEW: Close selection window
   if (message.action === "closeSelectionWindow") {
     const windowId = message.windowId;
     if (windowId && Number.isInteger(windowId)) {
       chrome.windows.remove(windowId, () => {
         if (chrome.runtime.lastError) {
-          console.error("Error closing selection window:", chrome.runtime.lastError);
+          console.error("Error closing window:", chrome.runtime.lastError.message);
         } else {
-          console.log("Selection window closed:", windowId);
+          console.log("Window closed:", windowId);
         }
       });
-    } else {
-      console.error("Invalid or missing windowId for closeSelectionWindow:", windowId);
     }
-  }
-
-  // NEW: Capture screen
-  if (message.action === "captureScreen") {
-    chrome.desktopCapture.chooseDesktopMedia(
-      ["screen", "window", "tab"],
-      sender.tab,
-      (streamId) => {
-        sendResponse({ streamId: streamId });
-      }
-    );
-    return true;
   }
 
   if (message.action === "uploadNotes") {

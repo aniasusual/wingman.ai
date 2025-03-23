@@ -67,21 +67,26 @@ confirmButton.addEventListener("click", async () => {
 
         // OCR logic integrated directly here
         const workerPath = chrome.runtime.getURL("lib/worker.min.js");
-        const langPath = chrome.runtime.getURL("lib/tessdata");
-        const corePath = chrome.runtime.getURL("lib/tesseract.min.js");
+        const langPath = chrome.runtime.getURL("lib/tessdata/");
+        const corePath = chrome.runtime.getURL("lib/tesseract-core.wasm.js");
 
         try {
             const worker = await Tesseract.createWorker({
                 workerPath,
                 langPath,
                 corePath,
+                workerBlobURL: false,
                 logger: (m) => console.log("Tesseract Progress:", m),
             });
 
             console.log("Worker created successfully");
+            console.log("doing ocr");
             await worker.load();
+            console.log("loading language");
             await worker.loadLanguage("eng");
+            console.log("initializing language");
             await worker.initialize("eng");
+            console.log("recognizing");
 
             const { data: { text } } = await worker.recognize(imageData);
             console.log("Recognized text:", text);
