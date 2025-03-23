@@ -8,86 +8,90 @@ let transcriptionBuffer = "";
 let bufferTimeout = null;
 let transcriptWindowId = null; // Add this to track the new window
 
-document.addEventListener("DOMContentLoaded", () => {
-  initializeSandbox();
+// NEW: Variables for screen selection
+const selectScreenAreaButton = document.getElementById("selectScreenArea"); // NEW
+let selectionWindowId = null; // NEW
 
-  const firebaseConfig = {
-    apiKey: "REDACTED_SECRET",
-    authDomain: "wingman-3d684.firebaseapp.com",
-    projectId: "wingman-3d684",
-    storageBucket: "wingman-3d684.appspot.com",
-    appId: "1:156676475531:web:93faa1e23674e68626e28e",
-  };
+// document.addEventListener("DOMContentLoaded", () => {
+//   initializeSandbox();
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  // const db = firebase.firestore();
+//   const firebaseConfig = {
+//     apiKey: "REDACTED_SECRET",
+//     authDomain: "wingman-3d684.firebaseapp.com",
+//     projectId: "wingman-3d684",
+//     storageBucket: "wingman-3d684.appspot.com",
+//     appId: "1:156676475531:web:93faa1e23674e68626e28e",
+//   };
 
-  const loginContainer = document.getElementById("loginContainer");
-  const mainContent = document.getElementById("mainContent");
-  const loadingContainer = document.getElementById("loadingContainer");
-  const googleSignIn = document.getElementById("googleSignIn");
-  // const logoutButton = document.getElementById("logoutButton");
+//   firebase.initializeApp(firebaseConfig);
+//   const auth = firebase.auth();
+//   // const db = firebase.firestore();
 
-  // Show loading state initially
-  loadingContainer.classList.remove("hidden");
-  loginContainer.classList.add("hidden");
-  mainContent.classList.add("hidden");
+//   const loginContainer = document.getElementById("loginContainer");
+//   const mainContent = document.getElementById("mainContent");
+//   const loadingContainer = document.getElementById("loadingContainer");
+//   const googleSignIn = document.getElementById("googleSignIn");
+//   // const logoutButton = document.getElementById("logoutButton");
 
-  auth.onAuthStateChanged((user) => {
-    // Hide loading state
-    loadingContainer.classList.add("hidden");
-    
-    if (user) {
-      loginContainer.classList.add("hidden");
-      mainContent.classList.remove("hidden");
-      console.log("User signed in:", user.email);
+//   // Show loading state initially
+//   loadingContainer.classList.remove("hidden");
+//   loginContainer.classList.add("hidden");
+//   mainContent.classList.add("hidden");
 
-      // Store user data in Firestore
-      // db.collection('users').doc(user.uid).set({
-      //   email: user.email,
-      //   lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-      // }, { merge: true })
-      // .catch((error) => {
-      //   console.error("Error storing user data:", error);
-      // });
-    } else {
-      loginContainer.classList.remove("hidden");
-      mainContent.classList.add("hidden");
-    }
-  });
+//   auth.onAuthStateChanged((user) => {
+//     // Hide loading state
+//     loadingContainer.classList.add("hidden");
 
-  // logoutButton.addEventListener("click", () => {
-  //   auth.signOut().then(() => {
-  //     console.log("User signed out");
-  //   }).catch((error) => {
-  //     console.error("Sign out error:", error);
-  //   });
-  // });
+//     if (user) {
+//       loginContainer.classList.add("hidden");
+//       mainContent.classList.remove("hidden");
+//       console.log("User signed in:", user.email);
 
-  googleSignIn.addEventListener("click", () => {
-    chrome.identity.getAuthToken({ interactive: true }, function (token) {
-      if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError);
-        return;
-      }
-      // Create credential with the token
-      const credential = firebase.auth.GoogleAuthProvider.credential(
-        null,
-        token
-      );
-      // Sign in with credential
-      auth
-        .signInWithCredential(credential)
-        .then((result) => {
-          console.log("Successfully signed in with Firebase");
-        })
-        .catch((error) => {
-          console.error("Firebase sign-in error:", error);
-        });
-    });
-  });
-});
+//       // Store user data in Firestore
+//       // db.collection('users').doc(user.uid).set({
+//       //   email: user.email,
+//       //   lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+//       // }, { merge: true })
+//       // .catch((error) => {
+//       //   console.error("Error storing user data:", error);
+//       // });
+//     } else {
+//       loginContainer.classList.remove("hidden");
+//       mainContent.classList.add("hidden");
+//     }
+//   });
+
+//   // logoutButton.addEventListener("click", () => {
+//   //   auth.signOut().then(() => {
+//   //     console.log("User signed out");
+//   //   }).catch((error) => {
+//   //     console.error("Sign out error:", error);
+//   //   });
+//   // });
+
+//   googleSignIn.addEventListener("click", () => {
+//     chrome.identity.getAuthToken({ interactive: true }, function (token) {
+//       if (chrome.runtime.lastError) {
+//         console.error(chrome.runtime.lastError);
+//         return;
+//       }
+//       // Create credential with the token
+//       const credential = firebase.auth.GoogleAuthProvider.credential(
+//         null,
+//         token
+//       );
+//       // Sign in with credential
+//       auth
+//         .signInWithCredential(credential)
+//         .then((result) => {
+//           console.log("Successfully signed in with Firebase");
+//         })
+//         .catch((error) => {
+//           console.error("Firebase sign-in error:", error);
+//         });
+//     });
+//   });
+// });
 
 // Ensure pdfjsLib is available globally
 if (typeof pdfjsLib === "undefined") {
@@ -244,6 +248,82 @@ toggleButton.addEventListener("click", () => {
     transcriptWindowId = null;
   }
 });
+
+
+// NEW: Screen selection logic
+selectScreenAreaButton.addEventListener("click", () => {
+  document.getElementById("status").textContent = "Select an area on your screen...";
+
+  chrome.runtime.sendMessage({ action: "openSelectionWindow" }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error("Error opening selection window:", chrome.runtime.lastError);
+      document.getElementById("status").textContent = "Failed to open selection window.";
+      return;
+    }
+    if (response && response.windowId) {
+      selectionWindowId = response.windowId;
+    } else {
+      console.error("No valid response from background script:", response);
+      document.getElementById("status").textContent = "Error: No window ID received.";
+    }
+  });
+});
+
+// chrome.runtime.onMessage.addListener((message) => {
+//   if (message.action === "screenSelected") {
+//     const { imageData, windowId } = message;
+
+//     document.getElementById("status").textContent = "Analyzing screen content...";
+
+//     const workerPath = chrome.runtime.getURL("lib/worker.min.js");
+//     const langPath = chrome.runtime.getURL("lib/tessdata");
+//     const corePath = chrome.runtime.getURL("lib/tesseract.min.js");
+
+//     Tesseract.createWorker({
+//       workerPath: workerPath,
+//       langPath: langPath,
+//       corePath: corePath,
+//       logger: (m) => console.log("Tesseract Progress:", m),
+//     })
+//       .then(async (worker) => {
+//         console.log("Worker created successfully");
+//         await worker.load();
+//         console.log("Worker loaded");
+//         await worker.loadLanguage("eng");
+//         console.log("Language loaded");
+//         await worker.initialize("eng");
+//         console.log("Worker initialized");
+
+//         const { data: { text } } = await worker.recognize(imageData);
+//         console.log("Recognized text:", text);
+//         await worker.terminate();
+
+//         if (text) {
+//           chrome.runtime.sendMessage({
+//             action: "displayTranscript",
+//             transcript: `Screen Search: ${text}`,
+//             isFinal: true,
+//             windowId: transcriptWindowId,
+//           });
+//           document.getElementById("status").textContent = "Screen content analyzed.";
+//         } else {
+//           document.getElementById("status").textContent = "No text found on screen.";
+//         }
+//       })
+//       .catch((err) => {
+//         console.error("OCR Error:", err);
+//         document.getElementById("status").textContent = "Error analyzing screen.";
+//       });
+
+//     chrome.runtime.sendMessage({
+//       action: "closeSelectionWindow",
+//       windowId: selectionWindowId,
+//     });
+//     selectionWindowId = null;
+//   }
+// });
+
+
 
 let modelReady = false;
 let sandboxIframe = null;

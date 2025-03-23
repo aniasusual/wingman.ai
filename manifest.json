@@ -6,8 +6,12 @@
     "activeTab",
     "storage",
     "tabCapture",
+    "desktopCapture",
     "scripting",
-    "identity"
+    "tabs",
+    "identity",
+    "system.display",
+    "windows"
   ],
   "host_permissions": [
     "https://*.firebaseapp.com/*",
@@ -40,16 +44,25 @@
         "lib/tf.min.js",
         "models/shouldQuery/model.json",
         "models/shouldQuery/*.bin",
-        "sandbox.html"
+        "sandbox.html",
+        "./lib/tessdata/*",
+        "./lib/tesseract.min.js",
+        "./lib/worker.min.js",
+        "./lib/tesseract-core.wasm.js",
+        "./lib/tessdata/*.traineddata.gz",
+        "./sandbox/ocr.html",
+        "./sandbox/ocr.js",
+        "/selection_window.html",
+        "/selection_window.js"
       ],
       "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
-    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self'",
+    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; worker-src 'self' blob:"
   },
   "sandbox": {
-    "pages": ["sandbox.html"]
+    "pages": ["sandbox.html", "./sandbox/ocr.html"]
   }
 }
