@@ -269,62 +269,6 @@ selectScreenAreaButton.addEventListener("click", () => {
   });
 });
 
-// chrome.runtime.onMessage.addListener((message) => {
-//   if (message.action === "screenSelected") {
-//     const { imageData, windowId } = message;
-
-//     document.getElementById("status").textContent = "Analyzing screen content...";
-
-//     const workerPath = chrome.runtime.getURL("lib/worker.min.js");
-//     const langPath = chrome.runtime.getURL("lib/tessdata");
-//     const corePath = chrome.runtime.getURL("lib/tesseract.min.js");
-
-//     Tesseract.createWorker({
-//       workerPath: workerPath,
-//       langPath: langPath,
-//       corePath: corePath,
-//       logger: (m) => console.log("Tesseract Progress:", m),
-//     })
-//       .then(async (worker) => {
-//         console.log("Worker created successfully");
-//         await worker.load();
-//         console.log("Worker loaded");
-//         await worker.loadLanguage("eng");
-//         console.log("Language loaded");
-//         await worker.initialize("eng");
-//         console.log("Worker initialized");
-
-//         const { data: { text } } = await worker.recognize(imageData);
-//         console.log("Recognized text:", text);
-//         await worker.terminate();
-
-//         if (text) {
-//           chrome.runtime.sendMessage({
-//             action: "displayTranscript",
-//             transcript: `Screen Search: ${text}`,
-//             isFinal: true,
-//             windowId: transcriptWindowId,
-//           });
-//           document.getElementById("status").textContent = "Screen content analyzed.";
-//         } else {
-//           document.getElementById("status").textContent = "No text found on screen.";
-//         }
-//       })
-//       .catch((err) => {
-//         console.error("OCR Error:", err);
-//         document.getElementById("status").textContent = "Error analyzing screen.";
-//       });
-
-//     chrome.runtime.sendMessage({
-//       action: "closeSelectionWindow",
-//       windowId: selectionWindowId,
-//     });
-//     selectionWindowId = null;
-//   }
-// });
-
-
-
 let modelReady = false;
 let sandboxIframe = null;
 
