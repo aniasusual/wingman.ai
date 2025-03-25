@@ -102,12 +102,16 @@ function createTranscriptEntry(transcript, answer, isCurrent = false) {
   entryDiv.className = "transcript-entry";
   entryDiv.style.backgroundColor = isScreenSearch ? "#25252c" : "#1e1e1e"; // Different color for screen search
 
-  const displayTranscript = isScreenSearch ? transcript.replace("Screen Search: ", "") : transcript;
+  const displayTranscript = isScreenSearch
+    ? transcript.replace("Screen Search: ", "")
+    : transcript;
 
   const transcriptSection = document.createElement("div");
   transcriptSection.innerHTML = `
     <div class="transcript-text-container">
-      <div class="transcript-text ${isCurrent ? "loading" : ""}" readonly>${isScreenSearch ? "Screen Search: " : ""}${displayTranscript}</div>
+      <div class="transcript-text ${isCurrent ? "loading" : ""}" readonly>${
+    isScreenSearch ? "Screen Search: " : ""
+  }${displayTranscript}</div>
       <svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
         <path d="m15 5 4 4"/>
@@ -120,7 +124,9 @@ function createTranscriptEntry(transcript, answer, isCurrent = false) {
   `;
 
   const answerSection = document.createElement("div");
-  answerSection.innerHTML = `<strong>Answer: </strong><pre class="answer-content">${answer.replace(/^Response:\s*/i, "") || "—"}</pre>`;
+  answerSection.innerHTML = `<strong>Answer: </strong><pre class="answer-content">${
+    answer.replace(/^Response:\s*/i, "") || "—"
+  }</pre>`;
 
   entryDiv.appendChild(transcriptSection);
   entryDiv.appendChild(answerSection);
@@ -140,11 +146,17 @@ function createTranscriptEntry(transcript, answer, isCurrent = false) {
     const editedTranscript = transcriptTextDiv.textContent.trim();
     const newAnswer = await generateAnswer(editedTranscript);
     const cleanNewAnswer = newAnswer.replace(/^Response:\s*/i, "");
-    answerSection.querySelector(".answer-content").textContent = cleanNewAnswer || "—";
+    answerSection.querySelector(".answer-content").textContent =
+      cleanNewAnswer || "—";
 
-    const index = sessionTranscripts.findIndex((entry) => entry.transcript === transcript);
+    const index = sessionTranscripts.findIndex(
+      (entry) => entry.transcript === transcript
+    );
     if (index !== -1) {
-      sessionTranscripts[index] = { transcript: editedTranscript, answer: newAnswer };
+      sessionTranscripts[index] = {
+        transcript: editedTranscript,
+        answer: newAnswer,
+      };
     } else if (currentTranscript.transcript === transcript) {
       currentTranscript = { transcript: editedTranscript, answer: newAnswer };
     }
@@ -195,7 +207,8 @@ function downloadSessionTranscripts() {
   const transcriptText = sessionTranscripts
     .map(
       (entry, index) =>
-        `Entry ${index + 1}:\nTranscript: ${entry.transcript}\nAnswer: ${entry.answer
+        `Entry ${index + 1}:\nTranscript: ${entry.transcript}\nAnswer: ${
+          entry.answer
         }\n\n`
     )
     .join("");
@@ -211,7 +224,8 @@ function downloadSessionTranscripts() {
 }
 
 function generateAnswer(question) {
-  const apiKey = "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";
+  // const apiKey = "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";
+  const apiKey = "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";
   const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
   return new Promise((resolve) => {
     chrome.storage.local.get(["notes"], async (result) => {
@@ -220,8 +234,8 @@ function generateAnswer(question) {
       const transcriptContext =
         sessionTranscripts.length > 0
           ? sessionTranscripts
-            .map((entry) => `Q: ${entry.transcript}\nA: ${entry.answer}`)
-            .join("\n\n")
+              .map((entry) => `Q: ${entry.transcript}\nA: ${entry.answer}`)
+              .join("\n\n")
           : "";
 
       try {
@@ -233,27 +247,55 @@ function generateAnswer(question) {
           },
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
+            //             messages: [
+            //               {
+            //                 role: "system",
+            //                 content: `You are an AI assistant for technical interview preparation. Provide *direct, clean, and precise* answers *under 200 words* without unnecessary details, preambles, or disclaimers. If notes are available, extract *only the key information* relevant to the user's question—do not mention the notes explicitly. If notes are unavailable, generate a *well-structured* response based on your knowledge, ensuring clarity and relevance.
+
+            // ${notes ? `Notes:\n${notes}` : ""}`,
+            //               },
+            //               ...(transcriptContext
+            //                 ? [
+            //                     {
+            //                       role: "system",
+            //                       content: `Additional past conversation transcripts for reference:\n\n${transcriptContext}`,
+            //                     },
+            //                   ]
+            //                 : []),
+            //               {
+            //                 role: "user",
+            //                 content: question,
+            //               },
+            //             ],
             messages: [
               {
                 role: "system",
-                content: `You are an AI assistant for technical interview preparation. Provide *direct, clean, and precise* answers *under 200 words* without unnecessary details, preambles, or disclaimers. If notes are available, extract *only the key information* relevant to the user's question—do not mention the notes explicitly. If notes are unavailable, generate a *well-structured* response based on your knowledge, ensuring clarity and relevance.
+                content: `You are an AI assistant helping a candidate prepare for interviews. Provide answers in *first person*, using *simple, clear English* that the candidate can directly speak out loud.
 
-${notes ? `Notes:\n${notes}` : ""}`
+Your answers should be:
+- *Clean, to the point, and under 200 words*
+- Relevant to the question, without any fluff, unnecessary details, preambles, or disclaimers
+- *Suitable for both technical and non-technical questions*
+- Free from unnecessary intros like "according to the notes" or "based on your resume"
+
+If notes are available, extract *only the key information* relevant to the user's question—do not mention the notes explicitly and speak *as if you are the candidate*.
+If no notes are available, generate a well-structured, direct response based on your knowledge, ensuring clarity and relevance.
+
+Always speak with confidence, clarity, and focus. No filler—just helpful, real answers.`,
               },
               ...(transcriptContext
                 ? [
-                  {
-                    role: "system",
-                    content: `Additional past conversation transcripts for reference:\n\n${transcriptContext}`,
-                  },
-                ]
+                    {
+                      role: "system",
+                      content: `Additional past conversation transcripts for reference:\n\n${transcriptContext}`,
+                    },
+                  ]
                 : []),
               {
                 role: "user",
                 content: question,
               },
             ],
-
           }),
         });
         const data = await response.json();
