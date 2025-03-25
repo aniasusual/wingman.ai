@@ -8,6 +8,8 @@ const aiResponseElement = document.getElementById("aiResponse");
 const loadingIndicator = document.getElementById("loadingIndicator");
 const closeResultButton = document.getElementById("closeResultButton");
 const copyButton = document.getElementById("copyButton");
+const editButton = document.querySelector(".edit-btn");
+const submitButton = document.querySelector(".submit-btn");
 
 let startX, startY, endX, endY;
 let isDrawing = false;
@@ -157,6 +159,47 @@ confirmButton.addEventListener("click", async () => {
     } else {
         showToast("Please make a selection first.");
     }
+});
+
+
+// Edit functionality
+editButton.addEventListener("click", () => {
+    capturedTextElement.contentEditable = "true";
+    capturedTextElement.classList.add("editable");
+    capturedTextElement.focus();
+    submitButton.style.display = "block";
+});
+
+submitButton.addEventListener("click", async () => {
+    const editedText = capturedTextElement.textContent.trim();
+    if (!editedText) {
+        showToast("Text cannot be empty");
+        return;
+    }
+
+    showLoading("Generating new answer...");
+    const newAnswer = await generateAnswer(editedText);
+
+    aiResponseElement.textContent = newAnswer;
+    capturedTextElement.contentEditable = "false";
+    capturedTextElement.classList.remove("editable");
+    submitButton.style.display = "none";
+
+    // Update session transcripts
+    sessionTranscripts[sessionTranscripts.length - 1] = {
+        transcript: editedText,
+        answer: newAnswer
+    };
+
+    // Update history
+    chrome.runtime.sendMessage({
+        action: "displayTranscript",
+        transcript: editedText,
+        answer: newAnswer,
+        isFinal: true
+    });
+
+    hideLoading();
 });
 
 // Generate answer using Groq API
