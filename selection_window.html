@@ -428,6 +428,61 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #555;
       }
+
+      /* testing after this */
+
+      .result-section {
+        position: relative;
+        margin-bottom: 20px;
+      }
+
+      .edit-controls {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: flex;
+        gap: 10px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .result-section:hover .edit-controls {
+        opacity: 1;
+      }
+
+      .edit-btn,
+      .submit-btn {
+        width: 24px;
+        height: 24px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-color: #f0f0f0;
+        transition: background-color 0.2s ease;
+      }
+
+      .edit-btn {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>');
+      }
+
+      .submit-btn {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>');
+        display: none;
+      }
+
+      .edit-btn:hover,
+      .submit-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .section-content.editable {
+        border: 1px dashed #666;
+        padding: 5px;
+        min-height: 50px;
+      }
     </style>
   </head>
   <body>
@@ -448,6 +503,10 @@
       <div class="result-section">
         <div class="section-header">Captured Text</div>
         <div id="capturedText" class="section-content"></div>
+        <div class="edit-controls">
+          <button class="edit-btn" title="Edit Text"></button>
+          <button class="submit-btn" title="Submit Edited Text"></button>
+        </div>
       </div>
 
       <div class="result-section">
