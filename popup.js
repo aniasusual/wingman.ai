@@ -296,6 +296,7 @@ window.addEventListener("message", (event) => {
     }
   } else if (event.data && event.data.action === "predictionResult") {
     const { callbackId, result } = event.data;
+    console.log("Prediction Result Received: ", result); // Log the result
     const callback = pendingPredictions[callbackId];
     if (callback) {
       callback(result);
@@ -332,8 +333,10 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeSandbox();
 });
 
-function processBufferedTranscription(transcript) {
-  if (shouldQueryAPI(transcript)) {
+async function processBufferedTranscription(transcript) {
+  const shouldQuery = await shouldQueryAPI(transcript);
+  console.log("Should Query API: ", shouldQuery, transcript);
+  if (shouldQuery) {
     chrome.runtime.sendMessage({
       action: "displayTranscript",
       transcript: transcript,
@@ -347,6 +350,7 @@ function processBufferedTranscription(transcript) {
       isFinal: false,
       windowId: transcriptWindowId,
     });
+    transcriptionBuffer = "";
   }
 }
 
