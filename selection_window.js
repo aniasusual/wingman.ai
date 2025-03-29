@@ -203,10 +203,71 @@ submitButton.addEventListener("click", async () => {
 });
 
 // Generate answer using Groq API
+// function generateAnswer(question) {
+//     const apiKey = "REDACTED_SECRET";
+//     const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+
+//     return new Promise((resolve) => {
+//         chrome.storage.local.get(["notes"], async (result) => {
+//             const notes = result.notes || "No notes uploaded.";
+
+//             const transcriptContext =
+//                 sessionTranscripts.length > 0
+//                     ? sessionTranscripts
+//                         .map((entry) => `Q: ${entry.transcript}\nA: ${entry.answer}`)
+//                         .join("\n\n")
+//                     : "";
+
+//             try {
+//                 const response = await fetch(apiUrl, {
+//                     method: "POST",
+//                     headers: {
+//                         "Content-Type": "application/json",
+//                         Authorization: `Bearer ${apiKey}`,
+//                     },
+//                     body: JSON.stringify({
+//                         model: "llama-3.3-70b-versatile",
+//                         messages: [
+//                             {
+//                                 role: "system",
+//                                 content: `You are an AI assistant for technical interview preparation. Provide *direct, clean, and precise* answers *under 200 words* without unnecessary details, preambles, or disclaimers. If notes are available, extract *only the key information* relevant to the user's question—do not mention the notes explicitly. If notes are unavailable, generate a *well-structured* response based on your knowledge, ensuring clarity and relevance.
+
+// ${notes ? `Notes:\n${notes}` : ""}`
+//                             },
+//                             ...(transcriptContext
+//                                 ? [
+//                                     {
+//                                         role: "system",
+//                                         content: `Additional past conversation transcripts for reference:\n\n${transcriptContext}`,
+//                                     },
+//                                 ]
+//                                 : []),
+//                             {
+//                                 role: "user",
+//                                 content: question,
+//                             },
+//                         ],
+//                     }),
+//                 });
+
+//                 const data = await response.json();
+//                 if (data.choices && data.choices.length > 0) {
+//                     resolve(data.choices[0].message.content);
+//                 } else {
+//                     resolve("Error: No response from AI.");
+//                 }
+//             } catch (error) {
+//                 console.error("Error fetching AI response:", error);
+//                 resolve("Error: Unable to fetch answer.");
+//             }
+//         });
+//     });
+// }
+
 function generateAnswer(question) {
+    // const apiKey = "REDACTED_SECRET";
     const apiKey = "REDACTED_SECRET";
     const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
-
     return new Promise((resolve) => {
         chrome.storage.local.get(["notes"], async (result) => {
             const notes = result.notes || "No notes uploaded.";
@@ -227,12 +288,42 @@ function generateAnswer(question) {
                     },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
+                        //             messages: [
+                        //               {
+                        //                 role: "system",
+                        //                 content: `You are an AI assistant for technical interview preparation. Provide *direct, clean, and precise* answers *under 200 words* without unnecessary details, preambles, or disclaimers. If notes are available, extract *only the key information* relevant to the user's question—do not mention the notes explicitly. If notes are unavailable, generate a *well-structured* response based on your knowledge, ensuring clarity and relevance.
+
+                        // ${notes ? `Notes:\n${notes}` : ""}`,
+                        //               },
+                        //               ...(transcriptContext
+                        //                 ? [
+                        //                     {
+                        //                       role: "system",
+                        //                       content: `Additional past conversation transcripts for reference:\n\n${transcriptContext}`,
+                        //                     },
+                        //                   ]
+                        //                 : []),
+                        //               {
+                        //                 role: "user",
+                        //                 content: question,
+                        //               },
+                        //             ],
                         messages: [
                             {
                                 role: "system",
-                                content: `You are an AI assistant for technical interview preparation. Provide *direct, clean, and precise* answers *under 200 words* without unnecessary details, preambles, or disclaimers. If notes are available, extract *only the key information* relevant to the user's question—do not mention the notes explicitly. If notes are unavailable, generate a *well-structured* response based on your knowledge, ensuring clarity and relevance.
+                                content: `You are an AI assistant ,assisting a candidate interviews a and video call meetings. Provide answers in *first person*, using *simple, clear English* that the candidate can directly speak out loud.
 
-${notes ? `Notes:\n${notes}` : ""}`
+Your answers should be:
+- *Clean, to the point
+- Relevant to the question, without any fluff, unnecessary details, preambles, or disclaimers
+- *Suitable for both technical and non-technical questions*
+- Free from unnecessary intros like "according to the notes" or "based on your resume"
+
+If notes are available, extract *only the key information* relevant to the user's question—do not mention the notes explicitly and speak *as if you are the candidate*.
+If no notes are available, generate a well-structured, direct response based on your knowledge, ensuring clarity and relevance.
+
+Always speak with confidence, clarity, and focus. No filler—just helpful, real answers. Also if necessary take some reference from the notes as well which I am attaching.
+${notes ? `Notes:\n${notes}` : ""}`,
                             },
                             ...(transcriptContext
                                 ? [
@@ -249,13 +340,10 @@ ${notes ? `Notes:\n${notes}` : ""}`
                         ],
                     }),
                 });
-
                 const data = await response.json();
-                if (data.choices && data.choices.length > 0) {
-                    resolve(data.choices[0].message.content);
-                } else {
-                    resolve("Error: No response from AI.");
-                }
+                if (data.choices && data.choices.length > 0)
+                    resolve(`Response: ${data.choices[0].message.content}`);
+                else resolve("Error: No response from AI.");
             } catch (error) {
                 console.error("Error fetching AI response:", error);
                 resolve("Error: Unable to fetch answer.");
